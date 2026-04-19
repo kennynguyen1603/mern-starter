@@ -65,7 +65,11 @@ class AuthService {
   }): Promise<IUserResponse> {
     const created = await userService.createLocalUser(data);
     // Fire-and-forget: không block register nếu email gửi lỗi
-    void this.sendVerificationEmail(created._id!.toString(), created.email, created.name);
+    void this.sendVerificationEmail(
+      created._id!.toString(),
+      created.email,
+      created.name,
+    );
     return userService.toUserResponse(created);
   }
 
@@ -280,7 +284,11 @@ class AuthService {
 
   // ─── Email Verification ───────────────────────────────────────────────────
 
-  async sendVerificationEmail(userId: string, email: string, name?: string): Promise<void> {
+  async sendVerificationEmail(
+    userId: string,
+    email: string,
+    name?: string,
+  ): Promise<void> {
     const rawToken = crypto.randomBytes(32).toString('hex');
     const doc = createVerificationTokenDoc({
       token: hashToken(rawToken),
@@ -293,10 +301,13 @@ class AuthService {
   }
 
   async verifyEmail(rawToken: string): Promise<void> {
+    console.log('rawToken =>', hashToken(rawToken));
     const tokenDoc = await tokenRepository.findByToken(
       hashToken(rawToken),
       TokenType.EmailVerificationToken,
     );
+
+    console.log('tokenDoc =>', tokenDoc);
 
     if (!tokenDoc || !tokenDoc.isActive || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
@@ -320,7 +331,11 @@ class AuthService {
       user._id!,
       TokenType.EmailVerificationToken,
     );
-    await this.sendVerificationEmail(user._id!.toString(), user.email, user.name);
+    await this.sendVerificationEmail(
+      user._id!.toString(),
+      user.email,
+      user.name,
+    );
   }
 
   // ─── Password Management ──────────────────────────────────────────────────

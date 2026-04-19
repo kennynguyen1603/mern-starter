@@ -40,7 +40,9 @@ const clearAuthCookies = (res: Response) => {
 };
 
 const extractRefreshToken = (req: Request): string => {
-  const token = (req.cookies?.refreshToken as string | undefined) ?? (req.body?.refreshToken as string | undefined);
+  const token =
+    (req.cookies?.refreshToken as string | undefined) ??
+    (req.body?.refreshToken as string | undefined);
   if (!token) throw new UnauthorizedError('Refresh token is required');
   return token;
 };
@@ -58,7 +60,10 @@ class AuthController {
   login = async (req: Request, res: Response) => {
     const { email, password } = req.validated?.body ?? req.body;
     const { ip, userAgent, deviceInfo } = getSecurityContext(req);
-    const result = await authService.login({ email, password }, { ipAddress: ip, userAgent, ...deviceInfo });
+    const result = await authService.login(
+      { email, password },
+      { ipAddress: ip, userAgent, ...deviceInfo },
+    );
     setAuthCookies(res, result.tokens);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.LOGIN_SUCCESS,
@@ -79,13 +84,19 @@ class AuthController {
     await authService.logout(refreshToken);
     await authService.logoutAll(userId);
     clearAuthCookies(res);
-    return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.LOGOUT_ALL_SUCCESS });
+    return new OkResponse({
+      message: RESPONSE_MESSAGES.AUTH.LOGOUT_ALL_SUCCESS,
+    });
   };
 
   refresh = async (req: Request, res: Response) => {
     const refreshToken = extractRefreshToken(req);
     const { ip, userAgent, deviceInfo } = getSecurityContext(req);
-    const tokens = await authService.refreshTokens(refreshToken, { ipAddress: ip, userAgent, ...deviceInfo });
+    const tokens = await authService.refreshTokens(refreshToken, {
+      ipAddress: ip,
+      userAgent,
+      ...deviceInfo,
+    });
     setAuthCookies(res, tokens);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.REFRESH_SUCCESS,
@@ -116,7 +127,11 @@ class AuthController {
   googleLink = async (req: Request, res: Response) => {
     const { pendingToken, password } = req.validated?.body ?? req.body;
     const { ip, userAgent, deviceInfo } = getSecurityContext(req);
-    const result = await authService.linkGoogleAccount(pendingToken, password, { ipAddress: ip, userAgent, ...deviceInfo });
+    const result = await authService.linkGoogleAccount(pendingToken, password, {
+      ipAddress: ip,
+      userAgent,
+      ...deviceInfo,
+    });
     setAuthCookies(res, result.tokens);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.ACCOUNT_LINK_SUCCESS,
@@ -135,7 +150,9 @@ class AuthController {
   resendVerification = async (req: Request, res: Response) => {
     const { email } = req.validated?.body ?? req.body;
     await authService.resendVerification(email);
-    return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.EMAIL_VERIFICATION_SENT });
+    return new OkResponse({
+      message: RESPONSE_MESSAGES.AUTH.EMAIL_VERIFICATION_SENT,
+    });
   };
 
   // ─── Password Management ──────────────────────────────────────────────────
@@ -143,19 +160,28 @@ class AuthController {
   forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.validated?.body ?? req.body;
     await authService.forgotPassword(email);
-    return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.FORGOT_PASSWORD_SENT });
+    return new OkResponse({
+      message: RESPONSE_MESSAGES.AUTH.FORGOT_PASSWORD_SENT,
+    });
   };
 
   resetPassword = async (req: Request, res: Response) => {
     const { email, otp, newPassword } = req.validated?.body ?? req.body;
     await authService.resetPassword(email, otp, newPassword);
-    return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.PASSWORD_RESET_SUCCESS });
+    return new OkResponse({
+      message: RESPONSE_MESSAGES.AUTH.PASSWORD_RESET_SUCCESS,
+    });
   };
 
   changePassword = async (req: Request, res: Response) => {
     const { currentPassword, newPassword } = req.validated?.body ?? req.body;
     const { userId, sessionId } = req.user!;
-    await authService.changePassword(userId, currentPassword, newPassword, sessionId);
+    await authService.changePassword(
+      userId,
+      currentPassword,
+      newPassword,
+      sessionId,
+    );
     return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.PASSWORD_CHANGED });
   };
 

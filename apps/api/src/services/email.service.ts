@@ -38,7 +38,9 @@ class TemplateEngine {
 
   private getLayout(): TemplateDelegate {
     if (!this.layout) {
-      const layoutPath = fileURLToPath(new URL('layouts/base.hbs', TEMPLATES_DIR));
+      const layoutPath = fileURLToPath(
+        new URL('layouts/base.hbs', TEMPLATES_DIR),
+      );
       this.layout = Handlebars.compile(readFileSync(layoutPath, 'utf-8'));
     }
     return this.layout;
@@ -77,7 +79,11 @@ class EmailService {
     return EmailService.instance;
   }
 
-  async sendVerificationEmail(to: string, token: string, name?: string): Promise<void> {
+  async sendVerificationEmail(
+    to: string,
+    token: string,
+    name?: string,
+  ): Promise<void> {
     const verifyUrl = `${env.frontendUrl}/verify-email?token=${token}`;
 
     const html = this.templates.render('verify-email', {
@@ -94,10 +100,17 @@ class EmailService {
       html,
     });
 
-    if (error) throw new InternalServerError('Failed to send verification email');
+    if (error) {
+      console.error('Resend Error:', error);
+      throw new InternalServerError(`Failed to send verification email: ${error.message}`);
+    }
   }
 
-  async sendPasswordResetOTP(to: string, otp: string, name?: string): Promise<void> {
+  async sendPasswordResetOTP(
+    to: string,
+    otp: string,
+    name?: string,
+  ): Promise<void> {
     const html = this.templates.render('password-reset', {
       subject: 'Mã đặt lại mật khẩu của bạn',
       name,
@@ -112,7 +125,10 @@ class EmailService {
       html,
     });
 
-    if (error) throw new InternalServerError('Failed to send password reset email');
+    if (error) {
+      console.error('Resend Error:', error);
+      throw new InternalServerError(`Failed to send password reset email: ${error.message}`);
+    }
   }
 }
 

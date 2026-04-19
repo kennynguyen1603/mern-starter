@@ -16,7 +16,7 @@ import { wrapAsyncHandler } from '@/utils/asyncHandler.js';
 
 const userRouter: Router = Router();
 
-const commonRateLimit = rateLimitMiddleware(60, 60);
+const commonRateLimit = rateLimitMiddleware(10, 60);
 
 userRouter.get(
   '/',

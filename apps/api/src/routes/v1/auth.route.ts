@@ -19,8 +19,6 @@ import { wrapAsyncHandler } from '@/utils/asyncHandler.js';
 
 const authRouter: Router = Router();
 
-// ─── Local Auth ───────────────────────────────────────────────────────────────
-
 authRouter.post(
   '/register',
   rateLimitMiddleware(5, 60),
@@ -35,24 +33,46 @@ authRouter.post(
   wrapAsyncHandler(authController.login),
 );
 
-authRouter.post('/logout', requireAuth, wrapAsyncHandler(authController.logout));
+authRouter.post(
+  '/logout',
+  requireAuth,
+  wrapAsyncHandler(authController.logout),
+);
 
-authRouter.post('/logout-all', requireAuth, wrapAsyncHandler(authController.logoutAll));
+authRouter.post(
+  '/logout-all',
+  requireAuth,
+  wrapAsyncHandler(authController.logoutAll),
+);
 
-authRouter.post('/refresh', rateLimitMiddleware(20, 60), wrapAsyncHandler(authController.refresh));
+authRouter.post(
+  '/refresh',
+  rateLimitMiddleware(20, 60),
+  wrapAsyncHandler(authController.refresh),
+);
 
-authRouter.get('/sessions', requireAuth, wrapAsyncHandler(authController.getSessions));
+authRouter.get(
+  '/sessions',
+  requireAuth,
+  wrapAsyncHandler(authController.getSessions),
+);
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
 
 authRouter.get(
   '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'], session: false }),
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+  }),
 );
 
 authRouter.get(
   '/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_failed' }),
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/login?error=google_failed',
+  }),
   wrapAsyncHandler(authController.googleCallback),
 );
 
