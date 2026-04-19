@@ -1,0 +1,305 @@
+tags:
+  - name: Auth
+    description: Authentication and Authorization management
+
+components:
+  schemas:
+    LoginAuthBody:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'nguyenvana@example.com'
+        password:
+          type: string
+          format: password
+          example: 'password123'
+
+    RefreshTokenBody:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5c...'
+
+    TokensResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5c...'
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5c...'
+
+    AuthResponseData:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokensResponse'
+
+    SessionDeviceInfo:
+      type: object
+      properties:
+        ipAddress:
+          type: string
+          example: '192.168.1.1'
+        userAgent:
+          type: string
+          example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...'
+        browser:
+          type: string
+          example: 'Chrome'
+        os:
+          type: string
+          example: 'Windows'
+        deviceType:
+          type: string
+          example: 'desktop'
+
+    Session:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '6620f1a2b3c4d5e6f7a8b9c0'
+        sessionId:
+          type: string
+          example: 'uuid-session-1234'
+        deviceInfo:
+          $ref: '#/components/schemas/SessionDeviceInfo'
+        isActive:
+          type: boolean
+          example: true
+        expiresAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserBody' # Shared from user.yml
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Account created successfully'
+                  status:
+                    type: integer
+                    example: 201
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '409':
+          description: Conflict — Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError' # Shared from user.yml
+
+  /auth/login:
+    post:
+      summary: Login user
+      description: Authenticate user and receive access & refresh tokens
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginAuthBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Login successful'
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    $ref: '#/components/schemas/AuthResponseData'
+        '401':
+          description: Unauthorized — Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /auth/logout:
+    post:
+      summary: Logout current session
+      description: Revoke the current device's session
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Logged out successfully'
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    nullable: true
+        '401':
+          description: Unauthorized — Token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout-all:
+    post:
+      summary: Logout all sessions
+      description: Revoke all active sessions of the user across all devices
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Logged out from all devices successfully'
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: object
+                    nullable: true
+        '401':
+          description: Unauthorized — Token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Obtain a new pair of tokens using a valid refresh token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Token refreshed successfully'
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    $ref: '#/components/schemas/TokensResponse'
+        '401':
+          description: Unauthorized — Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /auth/sessions:
+    get:
+      summary: Get active sessions
+      description: Retrieve all active device login sessions for current user
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Success'
+                  status:
+                    type: integer
+                    example: 200
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+        '401':
+          description: Unauthorized — Token invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
