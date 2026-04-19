@@ -1,0 +1,983 @@
+{
+  "info": {
+    "_postman_id": "mern-auth-collection-2026",
+    "name": "MERN Auth API",
+    "description": "Collection đầy đủ cho MERN monorepo auth system.\n\n## Cách dùng\n1. Import file này và file `MERN-Dev.postman_environment.json`\n2. Chọn environment **MERN — Development**\n3. Gọi **Login** trước — accessToken & refreshToken tự động lưu vào env\n4. Các request cần auth sẽ tự đọc token từ Cookie header\n\n## Token Management\n- Tokens được lưu tự động vào environment sau Login/Refresh\n- Cookie jar của Postman xử lý cookie-based auth tự động\n- Dùng `Authorization: Bearer {{accessToken}}` làm fallback nếu cần",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request: gắn Cookie header cho mọi request nếu có accessToken",
+          "// Postman cookie jar xử lý tự động, đây là fallback để đảm bảo token luôn được gửi",
+          "const accessToken = pm.environment.get('accessToken');",
+          "const refreshToken = pm.environment.get('refreshToken');",
+          "",
+          "if (accessToken) {",
+          "    pm.request.headers.upsert({ key: 'Cookie', value: `accessToken=${accessToken}` });",
+          "}",
+          "",
+          "// Gắn refreshToken vào cookie cho các route /auth/*",
+          "const requestPath = pm.request.url.getPath();",
+          "if (refreshToken && requestPath.includes('/auth/')) {",
+          "    const existingCookie = pm.request.headers.get('Cookie') || '';",
+          "    const hasRefresh = existingCookie.includes('refreshToken=');",
+          "    if (!hasRefresh) {",
+          "        const sep = existingCookie ? '; ' : '';",
+          "        pm.request.headers.upsert({",
+          "            key: 'Cookie',",
+          "            value: existingCookie + sep + `refreshToken=${refreshToken}`",
+          "        });",
+          "    }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level test: log lỗi nếu response không phải 2xx",
+          "if (pm.response.code >= 400) {",
+          "    const body = pm.response.json();",
+          "    console.log('[ERROR]', pm.request.method, pm.request.url.toString());",
+          "    console.log('Status:', pm.response.code, '|', body?.error?.message || body?.message);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "📁 Local Auth",
+          "item": [
+            {
+              "name": "Register",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                      "",
+                      "if (pm.response.code === 201) {",
+                      "    const body = pm.response.json();",
+                      "    const user = body.data?.user;",
+                      "    if (user) {",
+                      "        pm.environment.set('userId', user._id);",
+                      "        pm.environment.set('currentUserEmail', user.email);",
+                      "        pm.environment.set('targetUserId', user._id);",
+                      "        console.log('✅ User registered:', user.email);",
+                      "        console.log('📧 Kiểm tra email để lấy verification link');",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{testName}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "register"]
+                },
+                "description": "Đăng ký tài khoản mới.\n\n**Validation:**\n- name: 2–50 ký tự\n- email: hợp lệ\n- password: min 8 ký tự, 1 chữ hoa, 1 số\n\n**Side-effect:** Gửi email xác nhận đến địa chỉ email đã đăng ký."
+              }
+            },
+            {
+              "name": "Register — Email tồn tại (409)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"{{testName}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "register"]
+                },
+                "description": "Gọi lại với cùng email → expect 409 Conflict."
+              }
+            },
+            {
+              "name": "Register — Password yếu (422)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test\",\n  \"email\": \"weak@example.com\",\n  \"password\": \"123\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "register"]
+                },
+                "description": "Password quá ngắn, thiếu chữ hoa và số → expect 422."
+              }
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    // 1. Lưu token từ Set-Cookie header",
+                      "    let accessToken = '';",
+                      "    let refreshToken = '';",
+                      "",
+                      "    pm.response.headers.each(header => {",
+                      "        if (header.key.toLowerCase() === 'set-cookie') {",
+                      "            const val = header.value;",
+                      "            const atMatch = val.match(/^accessToken=([^;]+)/);",
+                      "            const rtMatch = val.match(/^refreshToken=([^;]+)/);",
+                      "            if (atMatch) accessToken = atMatch[1];",
+                      "            if (rtMatch) refreshToken = rtMatch[1];",
+                      "        }",
+                      "    });",
+                      "",
+                      "    // Fallback: đọc từ Postman cookie jar",
+                      "    if (!accessToken) accessToken = pm.cookies.get('accessToken') || '';",
+                      "    if (!refreshToken) refreshToken = pm.cookies.get('refreshToken') || '';",
+                      "",
+                      "    if (accessToken) {",
+                      "        pm.environment.set('accessToken', accessToken);",
+                      "        console.log('✅ accessToken saved');",
+                      "    }",
+                      "    if (refreshToken) {",
+                      "        pm.environment.set('refreshToken', refreshToken);",
+                      "        console.log('✅ refreshToken saved');",
+                      "    }",
+                      "",
+                      "    // 2. Lưu thông tin user",
+                      "    const body = pm.response.json();",
+                      "    const user = body.data?.user;",
+                      "    if (user) {",
+                      "        pm.environment.set('userId', user._id);",
+                      "        pm.environment.set('currentUserEmail', user.email);",
+                      "        pm.environment.set('targetUserId', user._id);",
+                      "        console.log('👤 Logged in as:', user.email);",
+                      "        console.log('📧 Email verified:', user.isEmailVerified);",
+                      "    }",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "login"]
+                },
+                "description": "Đăng nhập. Tokens được set vào HttpOnly cookies và tự động lưu vào environment."
+              }
+            },
+            {
+              "name": "Login — Sai mật khẩu (401)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"WrongPassword999\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "Login — Google-only account (401)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"googleuser@gmail.com\",\n  \"password\": \"AnyPassword1\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "login"]
+                },
+                "description": "User đăng ký bằng Google → không có password → 401 với message 'Please sign in with Google'."
+              }
+            },
+            {
+              "name": "Refresh Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    let accessToken = '';",
+                      "    let refreshToken = '';",
+                      "",
+                      "    pm.response.headers.each(header => {",
+                      "        if (header.key.toLowerCase() === 'set-cookie') {",
+                      "            const val = header.value;",
+                      "            const atMatch = val.match(/^accessToken=([^;]+)/);",
+                      "            const rtMatch = val.match(/^refreshToken=([^;]+)/);",
+                      "            if (atMatch) accessToken = atMatch[1];",
+                      "            if (rtMatch) refreshToken = rtMatch[1];",
+                      "        }",
+                      "    });",
+                      "",
+                      "    if (!accessToken) accessToken = pm.cookies.get('accessToken') || '';",
+                      "    if (!refreshToken) refreshToken = pm.cookies.get('refreshToken') || '';",
+                      "",
+                      "    if (accessToken) pm.environment.set('accessToken', accessToken);",
+                      "    if (refreshToken) pm.environment.set('refreshToken', refreshToken);",
+                      "",
+                      "    console.log('🔄 Tokens rotated successfully');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "refresh"]
+                },
+                "description": "Lấy accessToken mới bằng refreshToken (Refresh Token Rotation — token cũ bị revoke).\nRefreshToken được gửi tự động qua Cookie header từ collection pre-request script."
+              }
+            },
+            {
+              "name": "Get Active Sessions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/sessions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "sessions"]
+                },
+                "description": "Xem danh sách thiết bị đang đăng nhập. Cần accessToken."
+              }
+            },
+            {
+              "name": "Logout",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    pm.environment.unset('accessToken');",
+                      "    pm.environment.unset('refreshToken');",
+                      "    console.log('🚪 Logged out — tokens cleared from environment');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "logout"]
+                },
+                "description": "Đăng xuất thiết bị hiện tại. Revoke session này."
+              }
+            },
+            {
+              "name": "Logout All Devices",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    pm.environment.unset('accessToken');",
+                      "    pm.environment.unset('refreshToken');",
+                      "    console.log('🚪 Logged out from ALL devices — tokens cleared');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/logout-all",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "logout-all"]
+                },
+                "description": "Đăng xuất khỏi tất cả thiết bị. Revoke toàn bộ session."
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Google OAuth",
+          "item": [
+            {
+              "name": "Initiate Google Login (browser only)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "google"]
+                },
+                "description": "⚠️ Chỉ dùng trong browser — Postman không hỗ trợ OAuth redirect flow.\n\nMở URL này trong browser để bắt đầu Google OAuth. Sau khi Google xác thực:\n- Nếu email mới: redirect về `/` với `?auth=success` + cookies được set\n- Nếu email đã tồn tại (local account): redirect về `/auth/link-account?token=...`\n\nLưu `token` từ URL redirect vào env var `pendingLinkToken` để dùng cho request 'Link Google Account'."
+              }
+            },
+            {
+              "name": "Link Google Account (Confirm Merge)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    let accessToken = '';",
+                      "    let refreshToken = '';",
+                      "",
+                      "    pm.response.headers.each(header => {",
+                      "        if (header.key.toLowerCase() === 'set-cookie') {",
+                      "            const val = header.value;",
+                      "            const atMatch = val.match(/^accessToken=([^;]+)/);",
+                      "            const rtMatch = val.match(/^refreshToken=([^;]+)/);",
+                      "            if (atMatch) accessToken = atMatch[1];",
+                      "            if (rtMatch) refreshToken = rtMatch[1];",
+                      "        }",
+                      "    });",
+                      "",
+                      "    if (accessToken) pm.environment.set('accessToken', accessToken);",
+                      "    if (refreshToken) pm.environment.set('refreshToken', refreshToken);",
+                      "",
+                      "    const body = pm.response.json();",
+                      "    if (body.data?.user) {",
+                      "        pm.environment.set('userId', body.data.user._id);",
+                      "        console.log('✅ Google account linked:', body.data.user.providers);",
+                      "    }",
+                      "    pm.environment.unset('pendingLinkToken');",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pendingToken\": \"{{pendingLinkToken}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "google", "link"]
+                },
+                "description": "Xác nhận merge Google account với local account.\n\n**Flow:**\n1. Thực hiện Google OAuth trong browser (request trên)\n2. Copy `token` từ redirect URL vào env `pendingLinkToken`\n3. Gọi request này để xác nhận bằng mật khẩu hiện tại\n\n**Rate limit:** 5 lần / 15 phút per IP"
+              }
+            },
+            {
+              "name": "Link Google — Token hết hạn (400)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pendingToken\": \"invalidtoken123\",\n  \"password\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "google", "link"]
+                }
+              }
+            },
+            {
+              "name": "Link Google — Sai mật khẩu (401)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pendingToken\": \"{{pendingLinkToken}}\",\n  \"password\": \"WrongPassword1\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "google", "link"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Email Verification",
+          "item": [
+            {
+              "name": "Verify Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Redirect nên trả về 3xx hoặc server redirect về frontend",
+                      "console.log('Response status:', pm.response.code);",
+                      "console.log('Response:', pm.response.text().substring(0, 200));",
+                      "pm.environment.unset('verifyEmailToken');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/verify-email?token={{verifyEmailToken}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "verify-email"],
+                  "query": [{ "key": "token", "value": "{{verifyEmailToken}}" }]
+                },
+                "description": "Xác nhận email bằng token từ link trong email.\n\n**Cách dùng:**\n1. Register hoặc Resend Verification\n2. Mở email → copy token từ link (phần sau `?token=`)\n3. Set vào env var `verifyEmailToken`\n4. Gọi request này\n\nServer redirect về `FRONTEND_URL/login?verified=true`."
+              }
+            },
+            {
+              "name": "Verify Email — Token không hợp lệ (400)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/verify-email?token=invalidtoken123abc",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "verify-email"],
+                  "query": [{ "key": "token", "value": "invalidtoken123abc" }]
+                }
+              }
+            },
+            {
+              "name": "Resend Verification Email",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                },
+                "description": "Gửi lại email xác nhận. Luôn trả 200 dù email không tồn tại (chống enumeration).\n\n**Rate limit:** 3 lần / giờ per email"
+              }
+            },
+            {
+              "name": "Resend — Đã verified (400)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{currentUserEmail}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                },
+                "description": "Gửi lại cho email đã verified → expect 400."
+              }
+            },
+            {
+              "name": "Resend — Email không tồn tại (200 — chống enumeration)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"nonexistent@example.com\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                },
+                "description": "Server trả 200 dù email không tồn tại để tránh lộ thông tin."
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Password Management",
+          "item": [
+            {
+              "name": "Forgot Password (Gửi OTP)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "console.log('📧 OTP đã gửi đến email. Kiểm tra hộp thư và điền vào env var resetOtp');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/forgot-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "forgot-password"]
+                },
+                "description": "Gửi OTP 6 số về email để đặt lại mật khẩu.\n\nLuôn trả 200 dù email không tồn tại (chống enumeration).\n\n**Sau khi gọi:**\n1. Kiểm tra email\n2. Copy OTP 6 số vào env var `resetOtp`\n3. Gọi 'Reset Password'\n\n**Rate limit:** 5 lần / giờ per email"
+              }
+            },
+            {
+              "name": "Forgot Password — Google-only account (200 — silent skip)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"googleuser@gmail.com\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/forgot-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "forgot-password"]
+                },
+                "description": "Google-only user không có local password → server bỏ qua silently, trả 200."
+              }
+            },
+            {
+              "name": "Reset Password (Dùng OTP)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    pm.environment.unset('resetOtp');",
+                      "    pm.environment.unset('accessToken');",
+                      "    pm.environment.unset('refreshToken');",
+                      "    console.log('✅ Password reset. Tất cả session đã bị revoke.');",
+                      "    console.log('💡 Đăng nhập lại với mật khẩu mới:', pm.environment.get('newPassword'));",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otp\": \"{{resetOtp}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/reset-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "reset-password"]
+                },
+                "description": "Đặt lại mật khẩu bằng OTP. Sau khi thành công:\n- OTP bị revoke (single-use)\n- Tất cả session bị force logout\n\n**Security:** OTP bound to userId → không thể dùng OTP của email A để reset email B.\n\n**Rate limit:** 10 lần / giờ per email"
+              }
+            },
+            {
+              "name": "Reset Password — OTP sai (400)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otp\": \"000000\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/reset-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "reset-password"]
+                }
+              }
+            },
+            {
+              "name": "Change Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Password changed. Session hiện tại vẫn giữ, các session khác đã revoke.');",
+                      "    // Swap testPassword và newPassword trong env cho tiện test tiếp",
+                      "    const old = pm.environment.get('testPassword');",
+                      "    const newPw = pm.environment.get('newPassword');",
+                      "    pm.environment.set('testPassword', newPw);",
+                      "    pm.environment.set('newPassword', old);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "change-password"]
+                },
+                "description": "Đổi mật khẩu khi đang đăng nhập. Cần accessToken.\n\n**Security:**\n- userId lấy từ JWT (server-side) — không thể đổi pass của user khác\n- Cần nhập đúng mật khẩu hiện tại\n- Tất cả session khác bị revoke, session hiện tại giữ nguyên\n\n**Rate limit:** 5 lần / 15 phút"
+              }
+            },
+            {
+              "name": "Change Password — Sai mật khẩu hiện tại (401)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"WrongPassword1\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "change-password"]
+                }
+              }
+            },
+            {
+              "name": "Change Password — Giống mật khẩu cũ (400)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{testPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "change-password"]
+                }
+              }
+            },
+            {
+              "name": "Change Password — Không có auth (401)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Cookie", "value": "", "disabled": true }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "change-password"]
+                },
+                "description": "Gọi không có token → expect 401."
+              }
+            },
+            {
+              "name": "Set Password (Google-only users)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/set-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "set-password"]
+                },
+                "description": "Đặt mật khẩu lần đầu cho user đăng ký bằng Google (chưa có password).\n\nSau khi set, user có thể đăng nhập bằng cả Google và email/password.\nProvider 'local' được thêm vào providers[].\n\n**Rate limit:** 5 lần / 15 phút"
+              }
+            },
+            {
+              "name": "Set Password — Đã có password (409)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"{{newPassword}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/set-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "set-password"]
+                },
+                "description": "User đã có password → expect 409, hướng dùng change-password."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "sort", "value": "createdAt", "disabled": true }
+              ]
+            },
+            "description": "Lấy danh sách users với pagination.\n\n**Query params:**\n- `page`: trang (default 1)\n- `limit`: số item / trang (default 10)\n- `search`: tìm theo name hoặc email\n- `sort`: field để sort"
+          }
+        },
+        {
+          "name": "Get All Users — Tìm kiếm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user?page=1&limit=10&search=test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "test" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data?._id) {",
+                  "        pm.environment.set('targetUserId', body.data._id);",
+                  "        console.log('✅ User created, targetUserId set:', body.data._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Created User\",\n  \"email\": \"admin-created@example.com\",\n  \"password\": \"Admin@12345\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user"]
+            },
+            "description": "Tạo user mới (admin endpoint). Không cần auth trong route này nhưng nên được bảo vệ.\n\nLưu ý: đây là user route (`/user`), khác với auth route (`/auth/register`)."
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user", "{{targetUserId}}"]
+            },
+            "description": "Xem profile user. Cần auth.\n\n**Authorization:** Chỉ owner hoặc admin mới xem được (`requireOwnerOrAdmin` middleware)."
+          }
+        },
+        {
+          "name": "Get Profile — Không có auth (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user", "{{targetUserId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user", "{{targetUserId}}"]
+            },
+            "description": "Cập nhật profile. Cần auth.\n\n**Fields có thể update:** `name`, `avatar`"
+          }
+        },
+        {
+          "name": "Update Profile — Người khác (403)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hacked Name\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user/000000000000000000000001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user", "000000000000000000000001"]
+            },
+            "description": "Update user khác (không phải mình, không phải admin) → expect 403 Forbidden."
+          }
+        },
+        {
+          "name": "Delete User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.unset('targetUserId');",
+                  "    console.log('🗑 User deleted');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "{{apiVersion}}", "user", "{{targetUserId}}"]
+            },
+            "description": "Xoá user. Cần auth.\n\n**Authorization:** Chỉ owner hoặc admin."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "apiVersion",
+      "value": "v1",
+      "type": "string"
+    }
+  ]
+}
