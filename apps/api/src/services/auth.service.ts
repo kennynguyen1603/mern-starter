@@ -1,12 +1,22 @@
 import crypto from 'crypto';
 import { ObjectId } from 'mongodb';
-import { UserStatus, AuthProvider, IUserResponse, IAuthResponse } from '@mern/shared';
+import {
+  UserStatus,
+  AuthProvider,
+  IUserResponse,
+  IAuthResponse,
+} from '@mern/shared';
 import { userRepository } from '@/repositories/user.repository.js';
 import { tokenRepository } from '@/repositories/token.repository.js';
 import { tokenService } from '@/services/token.service.js';
 import { userService } from '@/services/user.service.js';
 import { emailService } from '@/services/email.service.js';
-import { comparePassword, hashPassword, hashToken, generateOTP } from '@/utils/crypto.js';
+import {
+  comparePassword,
+  hashPassword,
+  hashToken,
+  generateOTP,
+} from '@/utils/crypto.js';
 import { validateAndNormalizeEmail } from '@/utils/emailValidation.js';
 import {
   BadRequestError,
@@ -15,7 +25,11 @@ import {
   UnauthorizedError,
 } from '@/core/error.response.js';
 import { RESPONSE_MESSAGES } from '@/utils/constants.js';
-import { IDeviceInfo, TokenType, createVerificationTokenDoc } from '@/models/token.model.js';
+import {
+  IDeviceInfo,
+  TokenType,
+  createVerificationTokenDoc,
+} from '@/models/token.model.js';
 
 const assertAccountAllowed = (status: UserStatus) => {
   if (status === UserStatus.INACTIVE) {
@@ -27,7 +41,11 @@ const assertAccountAllowed = (status: UserStatus) => {
 };
 
 export type GoogleCallbackResult =
-  | { type: 'success'; tokens: { accessToken: string; refreshToken: string }; user: IUserResponse }
+  | {
+      type: 'success';
+      tokens: { accessToken: string; refreshToken: string };
+      user: IUserResponse;
+    }
   | { type: 'merge_required'; pendingToken: string };
 
 class AuthService {
@@ -47,7 +65,7 @@ class AuthService {
   }): Promise<IUserResponse> {
     const created = await userService.createLocalUser(data);
     // Fire-and-forget: không block register nếu email gửi lỗi
-    void this.sendVerificationEmail(created._id!.toString(), created.email);
+    void this.sendVerificationEmail(created._id!.toString(), created.email, created.name);
     return userService.toUserResponse(created);
   }
 
@@ -73,11 +91,18 @@ class AuthService {
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
-    const tokens = await tokenService.generateAuthTokens(user._id!, user.role, deviceInfo);
+    const tokens = await tokenService.generateAuthTokens(
+      user._id!,
+      user.role,
+      deviceInfo,
+    );
 
     return {
       user: userService.toUserResponse(user),
-      tokens: { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken },
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
     };
   }
 
@@ -110,10 +135,18 @@ class AuthService {
 
     await tokenService.revokeSession(dbToken.sessionId!);
 
-    const mergedDeviceInfo = deviceInfo ?? (dbToken.deviceInfo as IDeviceInfo | undefined);
-    const tokens = await tokenService.generateAuthTokens(user._id!, user.role, mergedDeviceInfo);
+    const mergedDeviceInfo =
+      deviceInfo ?? (dbToken.deviceInfo as IDeviceInfo | undefined);
+    const tokens = await tokenService.generateAuthTokens(
+      user._id!,
+      user.role,
+      mergedDeviceInfo,
+    );
 
-    return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   async getActiveSessions(userId: string) {
@@ -123,7 +156,12 @@ class AuthService {
   // ─── Google OAuth ─────────────────────────────────────────────────────────
 
   async handleGoogleCallback(
-    profile: { id: string; emails?: { value: string }[]; displayName: string; photos?: { value: string }[] },
+    profile: {
+      id: string;
+      emails?: { value: string }[];
+      displayName: string;
+      photos?: { value: string }[];
+    },
     deviceInfo?: IDeviceInfo,
   ): Promise<GoogleCallbackResult> {
     const email = profile.emails?.[0]?.value;
@@ -135,8 +173,16 @@ class AuthService {
     const userByGoogleId = await userRepository.findByGoogleId(profile.id);
     if (userByGoogleId) {
       assertAccountAllowed(userByGoogleId.status);
-      const tokens = await tokenService.generateAuthTokens(userByGoogleId._id!, userByGoogleId.role, deviceInfo);
-      return { type: 'success', tokens, user: userService.toUserResponse(userByGoogleId) };
+      const tokens = await tokenService.generateAuthTokens(
+        userByGoogleId._id!,
+        userByGoogleId.role,
+        deviceInfo,
+      );
+      return {
+        type: 'success',
+        tokens,
+        user: userService.toUserResponse(userByGoogleId),
+      };
     }
 
     // 2. Email conflict — existing local account
@@ -147,7 +193,10 @@ class AuthService {
       await tokenRepository.create({
         token: hashToken(rawToken),
         type: TokenType.AccountLinkToken,
-        userId: userByEmail._id! instanceof ObjectId ? userByEmail._id! : new ObjectId(userByEmail._id!),
+        userId:
+          userByEmail._id! instanceof ObjectId
+            ? userByEmail._id!
+            : new ObjectId(userByEmail._id!),
         sessionId: profile.id, // reuse sessionId field to carry googleId
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         isActive: true,
@@ -165,8 +214,16 @@ class AuthService {
       avatar: profile.photos?.[0]?.value,
     });
 
-    const tokens = await tokenService.generateAuthTokens(newUser._id!, newUser.role, deviceInfo);
-    return { type: 'success', tokens, user: userService.toUserResponse(newUser) };
+    const tokens = await tokenService.generateAuthTokens(
+      newUser._id!,
+      newUser.role,
+      deviceInfo,
+    );
+    return {
+      type: 'success',
+      tokens,
+      user: userService.toUserResponse(newUser),
+    };
   }
 
   async linkGoogleAccount(
@@ -174,7 +231,10 @@ class AuthService {
     password: string,
     deviceInfo?: IDeviceInfo,
   ): Promise<IAuthResponse> {
-    const tokenDoc = await tokenRepository.findByToken(hashToken(pendingToken), TokenType.AccountLinkToken);
+    const tokenDoc = await tokenRepository.findByToken(
+      hashToken(pendingToken),
+      TokenType.AccountLinkToken,
+    );
 
     if (!tokenDoc || !tokenDoc.isActive || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
@@ -197,19 +257,30 @@ class AuthService {
       ? user.providers
       : [...(user.providers ?? [AuthProvider.LOCAL]), AuthProvider.GOOGLE];
 
-    const updatedUser = await userRepository.updateById(user._id!.toString(), { googleId, providers });
-    if (!updatedUser) throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
+    const updatedUser = await userRepository.updateById(user._id!.toString(), {
+      googleId,
+      providers,
+    });
+    if (!updatedUser)
+      throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
 
-    const tokens = await tokenService.generateAuthTokens(updatedUser._id!, updatedUser.role, deviceInfo);
+    const tokens = await tokenService.generateAuthTokens(
+      updatedUser._id!,
+      updatedUser.role,
+      deviceInfo,
+    );
     return {
       user: userService.toUserResponse(updatedUser),
-      tokens: { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken },
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
     };
   }
 
   // ─── Email Verification ───────────────────────────────────────────────────
 
-  async sendVerificationEmail(userId: string, email: string): Promise<void> {
+  async sendVerificationEmail(userId: string, email: string, name?: string): Promise<void> {
     const rawToken = crypto.randomBytes(32).toString('hex');
     const doc = createVerificationTokenDoc({
       token: hashToken(rawToken),
@@ -218,17 +289,22 @@ class AuthService {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
     await tokenRepository.create(doc);
-    await emailService.sendVerificationEmail(email, rawToken);
+    await emailService.sendVerificationEmail(email, rawToken, name);
   }
 
   async verifyEmail(rawToken: string): Promise<void> {
-    const tokenDoc = await tokenRepository.findByToken(hashToken(rawToken), TokenType.EmailVerificationToken);
+    const tokenDoc = await tokenRepository.findByToken(
+      hashToken(rawToken),
+      TokenType.EmailVerificationToken,
+    );
 
     if (!tokenDoc || !tokenDoc.isActive || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    await userRepository.updateById(tokenDoc.userId.toString(), { isEmailVerified: true });
+    await userRepository.updateById(tokenDoc.userId.toString(), {
+      isEmailVerified: true,
+    });
     await tokenRepository.revokeToken(tokenDoc._id!);
   }
 
@@ -240,8 +316,11 @@ class AuthService {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.EMAIL_ALREADY_VERIFIED);
     }
 
-    await tokenRepository.revokeUserTokensByType(user._id!, TokenType.EmailVerificationToken);
-    await this.sendVerificationEmail(user._id!.toString(), user.email);
+    await tokenRepository.revokeUserTokensByType(
+      user._id!,
+      TokenType.EmailVerificationToken,
+    );
+    await this.sendVerificationEmail(user._id!.toString(), user.email, user.name);
   }
 
   // ─── Password Management ──────────────────────────────────────────────────
@@ -250,7 +329,10 @@ class AuthService {
     const user = await userRepository.findByEmail(email);
     if (!user || !user.providers?.includes(AuthProvider.LOCAL)) return; // Prevent enumeration
 
-    await tokenRepository.revokeUserTokensByType(user._id!, TokenType.PasswordResetToken);
+    await tokenRepository.revokeUserTokensByType(
+      user._id!,
+      TokenType.PasswordResetToken,
+    );
 
     const otp = generateOTP();
     const doc = createVerificationTokenDoc({
@@ -260,14 +342,21 @@ class AuthService {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
     await tokenRepository.create(doc);
-    await emailService.sendPasswordResetOTP(email, otp);
+    await emailService.sendPasswordResetOTP(email, otp, user.name);
   }
 
-  async resetPassword(email: string, otp: string, newPassword: string): Promise<void> {
+  async resetPassword(
+    email: string,
+    otp: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await userRepository.findByEmail(email);
     if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
 
-    const tokenDoc = await tokenRepository.findByToken(hashToken(otp), TokenType.PasswordResetToken);
+    const tokenDoc = await tokenRepository.findByToken(
+      hashToken(otp),
+      TokenType.PasswordResetToken,
+    );
 
     if (
       !tokenDoc ||
@@ -278,7 +367,9 @@ class AuthService {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    await userRepository.updateById(user._id!.toString(), { password: await hashPassword(newPassword) });
+    await userRepository.updateById(user._id!.toString(), {
+      password: await hashPassword(newPassword),
+    });
     await tokenRepository.revokeToken(tokenDoc._id!);
     await tokenService.revokeAllUserSessions(user._id!);
   }
@@ -297,13 +388,20 @@ class AuthService {
     }
 
     const isValid = await comparePassword(currentPassword, user.password);
-    if (!isValid) throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CURRENT_PASSWORD);
+    if (!isValid)
+      throw new UnauthorizedError(
+        RESPONSE_MESSAGES.AUTH.INVALID_CURRENT_PASSWORD,
+      );
 
     if (currentPassword === newPassword) {
-      throw new BadRequestError(RESPONSE_MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT);
+      throw new BadRequestError(
+        RESPONSE_MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT,
+      );
     }
 
-    await userRepository.updateById(userId, { password: await hashPassword(newPassword) });
+    await userRepository.updateById(userId, {
+      password: await hashPassword(newPassword),
+    });
     await tokenRepository.revokeAllUserTokensExceptSession(userId, sessionId);
   }
 
@@ -326,5 +424,4 @@ class AuthService {
   }
 }
 
-// Export duy nhất instance theo Singleton Pattern
 export const authService = AuthService.getInstance();

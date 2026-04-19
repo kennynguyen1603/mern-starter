@@ -23,6 +23,15 @@ export interface RefreshTokenPayload {
 }
 
 class JWTService {
+  private static instance: JWTService;
+
+  static getInstance(): JWTService {
+    if (!JWTService.instance) {
+      JWTService.instance = new JWTService();
+    }
+    return JWTService.instance;
+  }
+
   generateAccessToken(payload: Omit<AccessTokenPayload, 'type'>): string {
     const tokenPayload = { ...payload, type: TokenType.ACCESS };
     const secret = env.jwt.accessSecret!;
@@ -123,5 +132,4 @@ class JWTService {
   }
 }
 
-const jwtService = new JWTService();
-export default jwtService;
+export const jwtService = JWTService.getInstance();

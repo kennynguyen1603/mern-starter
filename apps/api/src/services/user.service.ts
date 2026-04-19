@@ -1,5 +1,10 @@
 import { WithId } from 'mongodb';
-import { UserRole, UserStatus, AuthProvider, IUserResponse } from '@mern/shared';
+import {
+  UserRole,
+  UserStatus,
+  AuthProvider,
+  IUserResponse,
+} from '@mern/shared';
 import { userRepository } from '@/repositories/user.repository.js';
 import { IUserDocument } from '@/models/user.model.js';
 import { ConflictError, NotFoundError } from '@/core/error.response.js';
@@ -26,7 +31,11 @@ class UserService {
     } as IUserResponse;
   }
 
-  async createLocalUser(data: { name: string; email: string; password: string }): Promise<WithId<IUserDocument>> {
+  async createLocalUser(data: {
+    name: string;
+    email: string;
+    password: string;
+  }): Promise<WithId<IUserDocument>> {
     const normalizedEmail = validateAndNormalizeEmail(data.email);
 
     const existing = await userRepository.findByEmail(normalizedEmail);
@@ -86,7 +95,10 @@ class UserService {
     return this.toUserResponse(user);
   }
 
-  async updateProfile(id: string, data: { name?: string; avatar?: string }): Promise<IUserResponse> {
+  async updateProfile(
+    id: string,
+    data: { name?: string; avatar?: string },
+  ): Promise<IUserResponse> {
     const user = await userRepository.findById(id);
     if (!user) {
       throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
@@ -136,5 +148,4 @@ class UserService {
   }
 }
 
-// Export duy nhất instance theo Singleton Pattern
 export const userService = UserService.getInstance();

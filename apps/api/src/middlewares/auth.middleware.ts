@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError, ForbiddenError } from '@/core/error.response.js';
-import jwtService from '@/services/jwt.service.js';
+import { jwtService } from '@/services/jwt.service.js';
 import { UserRole } from '@mern/shared';
 
 // Trích xuất Access Token: Ưu tiên HttpOnly cookie, fallback sang Authorization header

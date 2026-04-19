@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import { IDeviceInfo, createRefreshTokenDoc } from '@/models/token.model.js';
 import { tokenRepository } from '@/repositories/token.repository.js';
 import { hashToken } from '@/utils/crypto.js';
-import jwtService, { TokenType } from '@/services/jwt.service.js';
+import { jwtService, TokenType } from '@/services/jwt.service.js';
 
 class TokenService {
   private static instance: TokenService;
