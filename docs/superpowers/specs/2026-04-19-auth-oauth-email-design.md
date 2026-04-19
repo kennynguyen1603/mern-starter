@@ -355,7 +355,60 @@ ACCOUNT_LINK_TOKEN_SECRET=<secret>   # for signing pending link JWTs
 
 ---
 
-## 13. File Structure (new/modified)
+## 13. Singleton Pattern & D.R.Y Refactor
+
+### 13.1 Singleton Convention
+
+All service classes follow the same pattern already established by `tokenService` and `jwtService`:
+
+```typescript
+class FooService {
+  private static instance: FooService
+
+  static getInstance(): FooService {
+    if (!FooService.instance) FooService.instance = new FooService()
+    return FooService.instance
+  }
+  // ... methods
+}
+
+export const fooService = FooService.getInstance()
+```
+
+**`authService`** and **`userService`** — currently plain object literals — must be converted to this class pattern. `tokenService` and `jwtService` already comply and require no change.
+
+### 13.2 D.R.Y: Eliminate Duplicate Register Logic
+
+**Problem:** `authService.register()` and `userService.register()` contain identical logic:
+validate email → check duplicate → hash password → create user document.
+
+**Fix:** Remove `authService.register()`. Route the `POST /auth/register` endpoint to `userService.createLocalUser()` (rename from `userService.register()` to clarify its scope). `AuthService` calls `userService.createLocalUser()` internally when needed — auth orchestrates, user service owns user creation.
+
+### 13.3 D.R.Y: Unified User-to-Response Transform
+
+**Problem:** `toUserResponse()` in `auth.service.ts` and `excludePassword()` in `user.service.ts` serve the same purpose with slightly different implementations.
+
+**Fix:** Define a single `toUserResponse(user: WithId<IUserDocument>): IUserResponse` utility inside `user.service.ts`. `AuthService` imports and reuses it — no local copy.
+
+### 13.4 Responsibility Split (post-refactor)
+
+| Concern | Owner |
+|---|---|
+| User creation (local + Google) | `UserService` |
+| User profile read/update/delete | `UserService` |
+| Login, logout, token refresh | `AuthService` |
+| Google OAuth callback, account linking | `AuthService` |
+| Email verification, password reset flows | `AuthService` |
+| Change/set password | `AuthService` |
+| Token generation, rotation, revocation | `TokenService` (unchanged) |
+| JWT sign/verify | `JwtService` (unchanged) |
+| Email delivery | `EmailService` (new, singleton) |
+
+`AuthService` depends on `UserService` (for user creation/lookup) and `TokenService`. `UserService` depends only on `userRepository`. This keeps the dependency graph acyclic.
+
+---
+
+## 14. File Structure (new/modified)
 
 ```
 apps/api/src/
@@ -363,19 +416,20 @@ apps/api/src/
 │   └── passport/
 │       └── google.strategy.ts          # modified: session:false, delegate to AuthService
 ├── models/
-│   └── user.model.ts                   # modified: new fields
+│   └── user.model.ts                   # modified: new fields (isEmailVerified, authProvider, providers, googleId)
 ├── services/
-│   ├── auth.service.ts                 # modified: new methods
-│   └── email.service.ts                # NEW: Resend singleton
+│   ├── auth.service.ts                 # refactored to class + singleton; new OAuth/email/password methods
+│   ├── user.service.ts                 # refactored to class + singleton; register→createLocalUser; owns toUserResponse
+│   └── email.service.ts                # NEW: Resend singleton class
 ├── routes/v1/
 │   └── auth.route.ts                   # modified: new routes
 ├── controllers/
 │   └── auth.controller.ts              # modified: new handlers
 ├── validations/
-│   └── auth.validation.ts              # modified: new schemas
+│   └── auth.validation.ts              # modified: new Zod schemas
 └── repositories/
-    └── user.repository.ts              # minor: add updateProviders method
+    └── user.repository.ts              # minor: add findByGoogleId, updateProviders methods
 
 packages/shared/
-└── index.ts                            # modified: AuthProvider enum, updated IUser
+└── index.ts                            # modified: AuthProvider enum, updated IUser, IUserResponse
 ```
