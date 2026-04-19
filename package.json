@@ -1,0 +1,37 @@
+{
+  "name": "mern-monorepo",
+  "version": "1.0.0",
+  "description": "MERN Stack Monorepo — MongoDB, Express, React, Node.js",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors blue,green \"pnpm --filter @mern/api dev\" \"pnpm --filter @mern/web dev\"",
+    "dev:api": "pnpm --filter @mern/api dev",
+    "dev:web": "pnpm --filter @mern/web dev",
+    "build": "pnpm -r build",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "mern",
+    "monorepo",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^8.58.2",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^8.0.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}
