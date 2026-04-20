@@ -1,13 +1,19 @@
-import React from 'react';
-import { AuthProvider } from './context/AuthContext';
-import AuthExample from './components/AuthExample';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router-dom';
+import router from './router';
 
-const App: React.FC = () => {
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+export default function App() {
   return (
-    <AuthProvider>
-      <AuthExample />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
-};
-
-export default App;
+}

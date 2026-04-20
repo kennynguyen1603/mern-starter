@@ -44,6 +44,12 @@ class UserController {
     });
   };
 
+  getMe = async (req: Request, res: Response) => {
+    const user = await userService.getProfile(req.user!.userId);
+
+    return new OkResponse({ data: user });
+  };
+
   getAllUsers = async (req: Request, res: Response) => {
     const query = req.validated?.query ?? req.query;
     const result = await userService.getAllUsers(query);

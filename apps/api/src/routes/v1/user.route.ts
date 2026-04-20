@@ -19,6 +19,13 @@ const userRouter: Router = Router();
 const commonRateLimit = rateLimitMiddleware(10, 60);
 
 userRouter.get(
+  '/me',
+  commonRateLimit,
+  requireAuth,
+  wrapAsyncHandler(userController.getMe),
+);
+
+userRouter.get(
   '/',
   commonRateLimit,
   validate(listUsersSchema),

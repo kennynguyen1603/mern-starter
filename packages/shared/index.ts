@@ -2,21 +2,24 @@
 // USER
 // ==========================================
 
-export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  BANNED = 'banned',
-}
+export const UserStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  BANNED: 'banned',
+} as const;
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
-export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-}
+export const UserRole = {
+  USER: 'user',
+  ADMIN: 'admin',
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-export enum AuthProvider {
-  LOCAL = 'local',
-  GOOGLE = 'google',
-}
+export const AuthProvider = {
+  LOCAL: 'local',
+  GOOGLE: 'google',
+} as const;
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
 
 export interface IUser {
   _id?: string;
@@ -107,4 +110,18 @@ export interface IApiSuccess<T = any> {
   message: string;
   status: number;
   data: T;
+}
+
+// ==========================================
+// FE-SPECIFIC RESPONSE SHAPES
+// ==========================================
+
+/** Login / Google OAuth: tokens are set as HttpOnly cookies, only user returned in body */
+export interface ILoginResponse {
+  user: IUserResponse;
+}
+
+/** Refresh: only accessToken confirmed in body, refreshToken rotated via cookie */
+export interface IRefreshResponse {
+  accessToken: string;
 }
