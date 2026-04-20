@@ -11,6 +11,7 @@ import {
 } from '@/api/auth.api';
 import { getMeApi } from '@/api/user.api';
 import { useAuthStore } from '@/store/auth.store';
+import { scheduleTokenRefresh, clearTokenRefresh } from '@/lib/tokenRefresh';
 
 export const CURRENT_USER_KEY = 'currentUser';
 
@@ -22,6 +23,7 @@ export function useCurrentUser() {
     queryFn: async () => {
       const res = await getMeApi();
       setUser(res.data.data);
+      scheduleTokenRefresh();
       return res.data.data;
     },
     staleTime: Infinity,
@@ -39,6 +41,7 @@ export function useLogin() {
       const user = res.data.data.user;
       setUser(user);
       queryClient.setQueryData([CURRENT_USER_KEY], user);
+      scheduleTokenRefresh();
     },
   });
 }
@@ -54,10 +57,12 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutApi,
     onSuccess: () => {
+      clearTokenRefresh();
       clearUser();
       queryClient.clear();
     },
     onError: () => {
+      clearTokenRefresh();
       clearUser();
       queryClient.clear();
     },
@@ -90,6 +95,7 @@ export function useGoogleLink() {
       const user = res.data.data.user;
       setUser(user);
       queryClient.setQueryData([CURRENT_USER_KEY], user);
+      scheduleTokenRefresh();
     },
   });
 }
