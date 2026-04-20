@@ -65,11 +65,11 @@ class AuthService {
   }): Promise<IUserResponse> {
     const created = await userService.createLocalUser(data);
     // Fire-and-forget: không block register nếu email gửi lỗi
-    void this.sendVerificationEmail(
-      created._id!.toString(),
-      created.email,
-      created.name,
-    );
+    // void this.sendVerificationEmail(
+    //   created._id!.toString(),
+    //   created.email,
+    //   created.name,
+    // );
     return userService.toUserResponse(created);
   }
 
