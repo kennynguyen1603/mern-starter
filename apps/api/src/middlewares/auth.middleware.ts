@@ -3,7 +3,7 @@ import { UnauthorizedError, ForbiddenError } from '@/core/error.response.js';
 import { jwtService } from '@/services/jwt.service.js';
 import { UserRole } from '@mern/shared';
 
-// Trích xuất Access Token: Ưu tiên HttpOnly cookie, fallback sang Authorization header
+// Extract Access Token: priority HttpOnly cookie, fallback to Authorization header
 const extractAccessToken = (req: Request): string => {
   const cookieToken = req.cookies?.accessToken as string | undefined;
   if (cookieToken) return cookieToken;
@@ -47,11 +47,6 @@ export const requireAuth = (
   next();
 };
 
-/**
- * Middleware: Kiểm tra quyền Sở hữu hoặc Admin.
- * - Nếu user đang cố tình lấy/sửa dữ liệu của người khác (User ID khác với User ID trong token)
- *   thì sẽ bị chặn lại (Forbidden 403), TRỪ trường hợp User là admin.
- */
 export const requireOwnerOrAdmin = (
   req: Request,
   res: Response,

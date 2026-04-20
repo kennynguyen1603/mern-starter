@@ -42,7 +42,6 @@ export const defaultErrorHandler: ErrorRequestHandler = (
 
   res.setHeader('Content-Type', 'application/json');
 
-  // Handle chuẩn ErrorResponse (bao gồm NotFound, UnprocessableEntity, BadRequest...)
   if (err instanceof ErrorResponse) {
     err.send(res);
     return;

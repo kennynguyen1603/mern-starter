@@ -5,15 +5,6 @@ import {
   ErrorDetail,
 } from '@/core/error.response.js';
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      validated?: any;
-    }
-  }
-}
-
 type ValidateSchema = {
   body?: ZodType;
   query?: ZodType;

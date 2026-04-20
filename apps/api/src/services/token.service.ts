@@ -14,10 +14,6 @@ class TokenService {
     return TokenService.instance;
   }
 
-  /**
-   * Sinh và lưu trữ cặp Auth Tokens (Access Token + Refresh Token).
-   * Tạo Token DB Record chứa Footprint của thiết bị (để quản lý phiên).
-   */
   async generateAuthTokens(
     userId: string | ObjectId,
     role?: string,
@@ -46,9 +42,6 @@ class TokenService {
     return { accessToken, refreshToken, sessionId };
   }
 
-  /**
-   * Chuyên kiểm tra và xác thực Refresh Token.
-   */
   async verifyAndGetRefreshToken(tokenStr: string) {
     const payload = jwtService.verifyRefreshToken(tokenStr);
     if (!payload) return null;

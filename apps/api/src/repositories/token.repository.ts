@@ -83,7 +83,11 @@ export const tokenRepository = {
     sessionId: string,
   ): Promise<boolean> {
     const result = await tokenCollection().updateMany(
-      { userId: new ObjectId(userId), isActive: true, sessionId: { $ne: sessionId } },
+      {
+        userId: new ObjectId(userId),
+        isActive: true,
+        sessionId: { $ne: sessionId },
+      },
       { $set: { isActive: false, updatedAt: new Date() } },
     );
     return result.modifiedCount > 0;

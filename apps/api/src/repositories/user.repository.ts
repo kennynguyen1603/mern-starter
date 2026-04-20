@@ -17,7 +17,9 @@ export const userRepository = {
     });
   },
 
-  async findByGoogleId(googleId: string): Promise<WithId<IUserDocument> | null> {
+  async findByGoogleId(
+    googleId: string,
+  ): Promise<WithId<IUserDocument> | null> {
     return userCollection().findOne({ googleId });
   },
 

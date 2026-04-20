@@ -101,8 +101,9 @@ class EmailService {
     });
 
     if (error) {
-      console.error('Resend Error:', error);
-      throw new InternalServerError(`Failed to send verification email: ${error.message}`);
+      throw new InternalServerError(
+        `Failed to send verification email: ${error.message}`,
+      );
     }
   }
 
@@ -127,7 +128,9 @@ class EmailService {
 
     if (error) {
       console.error('Resend Error:', error);
-      throw new InternalServerError(`Failed to send password reset email: ${error.message}`);
+      throw new InternalServerError(
+        `Failed to send password reset email: ${error.message}`,
+      );
     }
   }
 }

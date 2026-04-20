@@ -3,19 +3,19 @@ import { redis } from '@/config/redis/redis.js';
 import { TOO_MANY_REQUESTS } from '@/core/error.response.js';
 
 /**
- * Middleware sử dụng Redis Rate Limiter để chống DDOS / Spam Request.
- * Tận dụng class `Redis` từ file config.
+ * Middleware using Redis Rate Limiter to prevent DDOS / Spam Request.
+ * Leverage `Redis` class from config file.
  *
- * @param limit Số lượt request tối đa
- * @param windowSeconds Cửa sổ thời gian (giây) tính cho số lượt đó
+ * @param limit Maximum number of requests allowed
+ * @param windowSeconds Time window (seconds) for the limit
  */
 export const rateLimitMiddleware = (limit: number, windowSeconds: number) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Xác định định danh: Lấy User ID nếu đã login, ngược lại lấy IP
+      // Determine identifier: Get User ID if logged in, otherwise get IP
       const identifier = req.user?.userId || req.ip || 'unknown_ip';
 
-      // Tạo key chuyên biệt cho từng route cụ thể
+      // Create specific key for each route
       const key = `ratelimit:${req.baseUrl}${req.path}:${identifier}`;
 
       const isAllowed = await redis.rateLimiter(key, limit, windowSeconds);

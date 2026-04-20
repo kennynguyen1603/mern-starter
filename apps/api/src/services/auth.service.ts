@@ -301,13 +301,10 @@ class AuthService {
   }
 
   async verifyEmail(rawToken: string): Promise<void> {
-    console.log('rawToken =>', hashToken(rawToken));
     const tokenDoc = await tokenRepository.findByToken(
       hashToken(rawToken),
       TokenType.EmailVerificationToken,
     );
-
-    console.log('tokenDoc =>', tokenDoc);
 
     if (!tokenDoc || !tokenDoc.isActive || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);

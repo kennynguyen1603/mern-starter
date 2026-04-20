@@ -4,10 +4,6 @@ import { database } from '@/config/db/db.js';
 
 export const USER_COLLECTION_NAME = 'users';
 
-/**
- * MongoDB Document type cho User
- * Dùng nội bộ trong BE — FE dùng IUser / IUserResponse từ @mern/shared
- */
 export interface IUserDocument {
   _id?: ObjectId;
   name: string;
@@ -30,7 +26,12 @@ export async function createUserIndexes(): Promise<void> {
 
   await collection.createIndexes([
     { key: { email: 1 }, unique: true, name: 'idx_email_unique' },
-    { key: { googleId: 1 }, unique: true, sparse: true, name: 'idx_googleId_unique_sparse' },
+    {
+      key: { googleId: 1 },
+      unique: true,
+      sparse: true,
+      name: 'idx_googleId_unique_sparse',
+    },
     { key: { status: 1 }, name: 'idx_status' },
     { key: { role: 1 }, name: 'idx_role' },
     { key: { createdAt: -1 }, name: 'idx_createdAt' },

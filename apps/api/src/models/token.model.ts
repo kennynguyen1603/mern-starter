@@ -24,10 +24,6 @@ export interface IDeviceInfo {
   location?: string;
 }
 
-/**
- * MongoDB Document type cho Token — follow cùng pattern với IUserDocument.
- * Dùng nội bộ trong BE, không expose sang FE.
- */
 export interface ITokenDocument {
   _id?: ObjectId;
   token: string;
@@ -57,7 +53,8 @@ export function createRefreshTokenDoc(data: {
   return {
     token: data.token,
     type: TokenType.RefreshToken,
-    userId: typeof data.userId === 'string' ? new ObjectId(data.userId) : data.userId,
+    userId:
+      typeof data.userId === 'string' ? new ObjectId(data.userId) : data.userId,
     sessionId: data.sessionId,
     deviceInfo: data.deviceInfo,
     expiresAt: data.expiresAt,
@@ -78,7 +75,8 @@ export function createVerificationTokenDoc(data: {
   return {
     token: data.token,
     type: data.type,
-    userId: typeof data.userId === 'string' ? new ObjectId(data.userId) : data.userId,
+    userId:
+      typeof data.userId === 'string' ? new ObjectId(data.userId) : data.userId,
     expiresAt: data.expiresAt,
     isActive: true,
     createdAt: now,
