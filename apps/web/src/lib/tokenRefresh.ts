@@ -1,7 +1,7 @@
 import api from '@/api/axios';
 
 const EXP_MS = parseInt(import.meta.env.VITE_ACCESS_TOKEN_EXP_MS ?? '900000');
-const BUFFER_MS = 2 * 60 * 1000; // refresh 2 phút trước khi hết hạn
+const BUFFER_MS = 2 * 60 * 1000;
 const DELAY_MS = Math.max(0, EXP_MS - BUFFER_MS);
 
 let timerId: ReturnType<typeof setTimeout> | null = null;
