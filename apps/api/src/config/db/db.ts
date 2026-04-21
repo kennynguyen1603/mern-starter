@@ -1,5 +1,7 @@
 import { MongoClient, Db } from 'mongodb';
 import { env } from '@/config/env/env.js';
+import { createUserIndexes } from '@/models/user.model.js';
+import { createTokenIndexes } from '@/models/token.model.js';
 
 class Database {
   private static instance: Database;
@@ -34,6 +36,13 @@ class Database {
     this.db = this.client.db(env.mongo.dbName);
 
     console.log('✅ MongoDB connected');
+
+    try {
+      await Promise.all([createUserIndexes(), createTokenIndexes()]);
+      console.log('✅ All indexes created successfully');
+    } catch (error) {
+      console.error('⚠️ Error creating indexes:', error);
+    }
   }
 
   async disconnect(): Promise<void> {
