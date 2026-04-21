@@ -42,7 +42,7 @@ mern-monorepo/
 ## API Architecture
 Follows layered architecture pattern:
 ```
-Routes → Controllers → Services → Repositories → Models (Mongoose)
+Routes → Controllers → Services → Repositories → Models
 ```
 - **Response & Error Handling Constraints**: See [API_RESPONSE_STANDARD.md](apps/api/src/docs/API_RESPONSE_STANDARD.md) for standard conventions regarding `SuccessResponse`, `ErrorResponse`, and Controller vs Service layer duties.
 
