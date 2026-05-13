@@ -1,240 +1,211 @@
-# MERN Monorepo Boilerplate
+# MERN Stack Starter
 
-This is a fullstack MERN boilerplate built with a monorepo architecture, including:
+A production-ready monorepo boilerplate for quickly bootstrapping full-stack applications with MongoDB, Express, React, and Node.js. Includes a complete authentication system out of the box — JWT, Google OAuth, email verification, password management, and a React frontend — so you can skip the plumbing and ship features.
 
-- Backend API with Express + TypeScript
-- Frontend with React + Vite + TypeScript
-- Shared types package (`@mern/shared`)
+## Features
 
-The goal of this repository is to provide a ready-to-use foundation for projects that need authentication flows, user management, pagination, and a clear service/repository layer separation.
+### Authentication & Security
+- **Local auth** — register, login, logout with JWT access + refresh tokens
+- **Google OAuth 2.0** — sign in with Google; account merge flow when the email already exists locally
+- **Token rotation** — refresh token is rotated on every use; token reuse detection immediately revokes all user sessions
+- **Session blacklisting** — instant session invalidation in MongoDB, effective even before the access token expires
+- **HttpOnly cookies** — access token (15 min) and refresh token (7 days) stored in HttpOnly cookies; never exposed to JavaScript
+- **Rate limiting** — per-route, per-user Redis counters with suspicious-request detection (bursts under 100 ms)
+- **Password management** — forgot password via OTP email, reset, change, and set password (for OAuth-only accounts)
+- **Email verification** — send and resend verification emails via Resend
 
-## Key Features
+### Backend (`apps/api`)
+- Layered architecture: Routes → Middleware → Controllers → Services → Repositories → MongoDB
+- Zod schema validation on all incoming request data
+- Structured, typed error/success response hierarchy
+- `wrapAsyncHandler` — zero-boilerplate async error propagation to Express error handler
+- Winston logging with daily file rotation
+- Swagger/OpenAPI documentation (available in development at `/api/v1/docs`)
+- Device and browser info captured per session (`ua-parser-js`)
+- Cloudinary integration configured and ready to wire up
+- `PaginationUtils` with text search, date range, and custom filter support
 
-- Email/password registration and login
-- Google OAuth login
-- Link a Google account with an existing local account
-- Forgot password / reset password with OTP via email
-- Email verification via verification link
-- Set password for OAuth-only accounts (without local password)
-- Session management (logout current device or all devices)
-- Access/refresh token handling with HttpOnly cookies
-- Route-level rate limiting with Redis
-- Standardized success/error API responses
-- Swagger API docs in development mode
+### Frontend (`apps/web`)
+- React 19 + Vite 6 + TypeScript
+- TanStack Query for server state; Zustand for client auth state
+- Axios interceptor — automatically queues concurrent 401s and retries after a single token refresh
+- Proactive token refresh — re-issues tokens ~1 minute before expiry so users never see an interruption
+- React Hook Form + Zod for form validation
+- Protected routes with loading guard
+- Pages: Login, Register, Forgot Password, Reset Password, Dashboard, Profile, Set Password, Link Account (Google merge flow)
 
 ## Tech Stack
 
-### Backend (`apps/api`)
-
-- Node.js + Express 5 + TypeScript
-- MongoDB (native driver)
-- Redis
-- JWT + Passport Google OAuth 2.0
-- Zod validation
-- Winston logging
-- Swagger (swagger-jsdoc + swagger-ui-express)
-- Resend (email service) + Handlebars templates
-
-### Frontend (`apps/web`)
-
-- React 19 + TypeScript + Vite
-- React Router
-- TanStack Query
-- Zustand
-- React Hook Form + Zod
-- Axios (with automatic token refresh interceptor)
-
-### Workspace & Tooling
-
-- pnpm workspace
-- ESLint + Prettier
-- Husky pre-commit
-- GitHub Actions CI (`lint` + `build`)
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js ≥ 20, TypeScript 5 |
+| Framework | Express 5 |
+| Database | MongoDB 7 (native driver — no Mongoose) |
+| Cache / Rate limit | Redis 5 |
+| Auth | JWT (`jsonwebtoken`), Passport.js, Google OAuth 2.0 |
+| Email | Resend + Handlebars templates |
+| File storage | Cloudinary |
+| Frontend | React 19, Vite 6 |
+| Server state | TanStack Query 5 |
+| Client state | Zustand 5 |
+| Forms | React Hook Form 7 + Zod 4 |
+| Routing | React Router 7 |
+| HTTP client | Axios |
+| Monorepo | pnpm workspaces |
+| Code quality | ESLint, Prettier, Husky pre-commit hooks |
 
 ## Project Structure
 
-```text
-.
-├─ apps/
-│  ├─ api/          # Express API + auth/user modules
-│  └─ web/          # React app
-├─ packages/
-│  └─ shared/       # Shared types/interfaces between frontend and backend
-├─ docs/            # Internal design documentation
-├─ docker-compose.yml
-└─ package.json     # Workspace-level scripts
+```
+mern-starter/
+├── apps/
+│   ├── api/                  # Express backend (@mern/api)
+│   │   ├── src/
+│   │   │   ├── config/       # DB, Redis, Passport, env (Zod-validated), Cloudinary
+│   │   │   ├── controllers/  # Thin request handlers
+│   │   │   ├── core/         # ErrorResponse hierarchy, SuccessResponse, HTTP status codes
+│   │   │   ├── middlewares/  # requireAuth, validate (Zod), rateLimit (Redis), error handler
+│   │   │   ├── models/       # Document interfaces + MongoDB index creation
+│   │   │   ├── repositories/ # MongoDB CRUD — the only layer that touches the DB
+│   │   │   ├── routes/v1/    # Express routers
+│   │   │   ├── services/     # Business logic: auth, user, token, jwt, email
+│   │   │   ├── templates/    # Handlebars email layouts, partials, and templates
+│   │   │   ├── types/        # Express type augmentation (req.user, req.validated)
+│   │   │   ├── utils/        # crypto, logger, pagination, security utils, asyncHandler
+│   │   │   └── validations/  # Zod request schemas
+│   │   ├── postman/          # Postman collection and environment
+│   │   ├── .env.example      # Environment variable template
+│   │   └── Dockerfile
+│   └── web/                  # React frontend (@mern/web)
+│       └── src/
+│           ├── api/          # Axios instance + typed API call functions
+│           ├── components/   # ProtectedRoute
+│           ├── hooks/        # useAuthQueries, useUserQueries
+│           ├── layouts/      # AuthLayout, MainLayout
+│           ├── lib/          # Proactive token refresh scheduler
+│           ├── pages/        # All page components
+│           ├── router.tsx    # React Router configuration
+│           ├── schemas/      # Zod form validation schemas
+│           └── store/        # Zustand auth store
+└── packages/
+    └── shared/               # Shared TypeScript types used by both api and web (@mern/shared)
 ```
 
-## System Requirements
+## Prerequisites
 
-- Node.js >= 22
-- pnpm >= 10
-- MongoDB
-- Redis
+- **Node.js** ≥ 20
+- **pnpm** ≥ 10 (`npm install -g pnpm`)
+- **MongoDB** — local instance or [MongoDB Atlas](https://www.mongodb.com/atlas)
+- **Redis** — local instance or [Redis Cloud](https://redis.io/cloud/)
+- **Google Cloud Console** project with OAuth 2.0 credentials ([guide](https://developers.google.com/identity/protocols/oauth2))
+- **Resend** account for transactional email ([resend.com](https://resend.com))
+- **Cloudinary** account for file uploads ([cloudinary.com](https://cloudinary.com))
 
-## Installation
+## Getting Started
+
+### 1. Clone and install
 
 ```bash
+git clone <repo-url>
+cd mern-starter
 pnpm install
 ```
 
-## Environment Configuration
-
-### 1) Backend environment (`apps/api/.env.development`)
-
-Create `apps/api/.env.development`:
-
-```env
-PORT=8080
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-
-MONGODB_URI=mongodb://localhost:27017
-DB_NAME=mern_boilerplate
-
-ENCRYPTION_KEY=your_32_chars_or_more_encryption_key_here
-
-JWT_SECRET_ACCESS_TOKEN=your_access_secret_here
-JWT_SECRET_ACCESS_TOKEN_EXP=15m
-JWT_SECRET_REFRESH_TOKEN=your_refresh_secret_here
-JWT_SECRET_REFRESH_TOKEN_EXP=7d
-
-# Use one of these Redis config options:
-REDIS_URL=redis://localhost:6379
-# REDIS_HOST=localhost
-# REDIS_PORT=6379
-
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:8080/api/v1/auth/google/callback
-
-RESEND_API_KEY=your_resend_api_key
-FROM_EMAIL=noreply@example.com
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-```
-
-Note: the current backend env schema requires all variables above, even if you are not using Google/Resend/Cloudinary yet.
-
-### 2) Frontend environment (`apps/web/.env.development`)
-
-Copy from the sample file:
+### 2. Configure environment variables
 
 ```bash
+# Backend
+cp apps/api/.env.example apps/api/.env.development
+
+# Frontend
 cp apps/web/.env.example apps/web/.env.development
 ```
 
-Default values:
+Fill in your credentials. See each app's README for a full variable reference:
+- [apps/api/README.md](apps/api/README.md)
+- [apps/web/README.md](apps/web/README.md)
 
-```env
-VITE_PORT=5173
-VITE_API_URL=http://localhost:8080
-VITE_ACCESS_TOKEN_EXP_MS=900000
-```
-
-## Run Locally
-
-### Run API + Web together
+### 3. Run in development
 
 ```bash
+# Start API + Web concurrently
 pnpm dev
-```
 
-### Run each app separately
-
-```bash
+# Or individually
 pnpm dev:api
 pnpm dev:web
 ```
 
-### Default URLs
+| Service | URL |
+|---|---|
+| Frontend | `http://localhost:5173` |
+| API | `http://localhost:8080` |
+| Swagger docs | `http://localhost:8080/api/v1/docs` |
 
-- Frontend: `http://localhost:5173`
-- API: `http://localhost:8080`
-- Swagger docs (dev): `http://localhost:8080/api/v1/docs`
+### 4. Build for production
 
-## Main Scripts
+```bash
+pnpm build
+```
 
-### Root-level scripts
+## Scripts
 
-- `pnpm dev`: run API + Web concurrently
-- `pnpm dev:api`: run backend only
-- `pnpm dev:web`: run frontend only
-- `pnpm build`: build the entire workspace
-- `pnpm lint`: lint the whole repo
-- `pnpm format`: format code with Prettier
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start API + Web in watch mode (concurrently) |
+| `pnpm dev:api` | Start API only |
+| `pnpm dev:web` | Start Web only |
+| `pnpm build` | Build all packages |
+| `pnpm lint` | Lint the entire repo |
+| `pnpm format` | Format all files with Prettier |
 
-### API scripts (`@mern/api`)
+## API Reference
 
-- `pnpm --filter @mern/api dev`
-- `pnpm --filter @mern/api build`
-- `pnpm --filter @mern/api start`
-- `pnpm --filter @mern/api lint`
-- `pnpm --filter @mern/api lint:fix`
+Base URL: `http://localhost:8080/api/v1`
 
-### Web scripts (`@mern/web`)
+### Auth — `/auth`
 
-- `pnpm --filter @mern/web dev`
-- `pnpm --filter @mern/web build`
-- `pnpm --filter @mern/web preview`
-- `pnpm --filter @mern/web lint`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/register` | — | Create a local account |
+| POST | `/login` | — | Login, set auth cookies |
+| POST | `/logout` | Required | Revoke current session |
+| POST | `/logout-all` | Required | Revoke all sessions |
+| POST | `/refresh` | — | Rotate refresh token, issue new access token |
+| GET | `/sessions` | Required | List active sessions |
+| GET | `/google` | — | Redirect to Google OAuth |
+| GET | `/google/callback` | — | Google OAuth callback |
+| POST | `/google/link` | — | Merge Google account with an existing local account |
+| GET | `/verify-email?token=` | — | Verify email address |
+| POST | `/resend-verification` | — | Re-send verification email |
+| POST | `/forgot-password` | — | Send OTP reset code to email |
+| POST | `/reset-password` | — | Reset password with OTP |
+| POST | `/change-password` | Required | Change password (keeps current session) |
+| POST | `/set-password` | Required | Set password on OAuth-only account |
 
-## Notable API Routes (v1)
+### Users — `/user`
 
-Base path: `/api/v1`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/me` | Required | Get current user profile |
+| GET | `/` | — | List users (paginated, searchable) |
+| POST | `/` | — | Create user |
+| GET | `/:id` | Required + Owner/Admin | Get user by ID |
+| PUT | `/:id` | Required + Owner/Admin | Update user profile |
+| DELETE | `/:id` | Required + Owner/Admin | Delete user |
 
-- Auth:
-  - `POST /auth/register`
-  - `POST /auth/login`
-  - `POST /auth/logout`
-  - `POST /auth/logout-all`
-  - `POST /auth/refresh`
-  - `GET /auth/sessions`
-  - `GET /auth/google`
-  - `GET /auth/google/callback`
-  - `POST /auth/google/link`
-  - `GET /auth/verify-email`
-  - `POST /auth/resend-verification`
-  - `POST /auth/forgot-password`
-  - `POST /auth/reset-password`
-  - `POST /auth/change-password`
-  - `POST /auth/set-password`
-- User:
-  - `GET /user/me`
-  - `GET /user`
-  - `POST /user`
-  - `GET /user/:id`
-  - `PUT /user/:id`
-  - `DELETE /user/:id`
+A Postman collection is available at `apps/api/postman/`.
 
-Postman collections are available in `apps/api/postman/`.
+## Docker
 
-## Main Frontend Routes
+A `docker-compose.yml` is provided for running MongoDB locally:
 
-- Public:
-  - `/login`
-  - `/register`
-  - `/forgot-password`
-  - `/reset-password`
-  - `/auth/link-account`
-- Protected:
-  - `/`
-  - `/profile/:id`
-  - `/profile/me/set-password`
+```bash
+docker compose up mongo
+```
 
-## CI
+> Note: the Docker Compose `api` service build path points to `packages/api` — update it to `apps/api` if you want to containerise the API.
 
-The workflow in `.github/workflows/deploy.yml` runs:
+## Shared Types
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm lint`
-3. `pnpm build`
-
-on pushes to `main`, `dev`, and pull requests targeting `main`.
-
-## Docker Note
-
-This repo includes `docker-compose.yml` and `apps/api/Dockerfile`. However, the current compose file references `packages/api` (while the actual API source is in `apps/api`). If you use Docker Compose, update the build/context paths to match the current structure.
-
+`packages/shared` exports all TypeScript types shared between the API and the frontend: user interfaces, auth DTOs, pagination types, and API response shapes. Both workspaces import from `@mern/shared`.
