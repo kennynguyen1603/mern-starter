@@ -1,20 +1,84 @@
-version: '3.8'
-services:
-  api:
-    build: ./packages/api
-    ports:
-      - '${PORT:-4000}:${PORT:-4000}'
-    env_file:
-      - ./.env.development
-    depends_on:
-      - mongo
+# Production-like stack. Secrets come from apps/api/.env.production (not baked
+# into any image). FRONTEND_URL there must match the web URL below
+# (default http://localhost). Usage: docker compose up -d --build
 
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+
+services:
+  web:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_ACCESS_TOKEN_EXP_MS: ${VITE_ACCESS_TOKEN_EXP_MS:-900000}
+    image: mern-starter/web
+    ports:
+      - '${WEB_PORT:-80}:8080'
+    tmpfs:
+      - /tmp
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: mern-starter/api
+    env_file:
+      - ./apps/api/.env.production
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      MONGODB_URI: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379
+    # Exposed for the Google OAuth callback (GOOGLE_CALLBACK_URL).
+    ports:
+      - '${API_PORT:-8080}:8080'
+    tmpfs:
+      - /tmp
+    volumes:
+      - api_logs:/app/src/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Data stores stay on the internal network — no published ports.
   mongo:
     image: mongo:7
-    ports:
-      - '27017:27017'
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
 volumes:
   mongo_data:
+  redis_data:
+  api_logs:
