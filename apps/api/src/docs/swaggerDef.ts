@@ -4,12 +4,8 @@ import { env } from '@/config/env/env.js';
 const swaggerDef = {
   openapi: '3.0.0',
   info: {
-    title: 'node-express-boilerplate API documentation',
+    title: 'MERN Starter API',
     version: pkg.version,
-    license: {
-      name: 'MIT',
-      url: 'https://github.com/hagopj13/node-express-boilerplate/blob/master/LICENSE',
-    },
   },
   servers: [
     {
@@ -23,6 +19,11 @@ const swaggerDef = {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
+      },
+      cookieAuth: {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'accessToken',
       },
     },
   },
