@@ -1,25 +1,5 @@
 import { z } from 'zod';
 
-export const registerUserSchema = {
-  body: z.object({
-    name: z
-      .string({ message: 'Name is required' })
-      .min(2, 'Name must be at least 2 characters')
-      .max(50, 'Name must be at most 50 characters')
-      .trim(),
-    email: z
-      .string({ message: 'Email is required' })
-      .trim()
-      .toLowerCase()
-      .pipe(z.email('Invalid email address')),
-
-    password: z
-      .string({ message: 'Password is required' })
-      .min(6, 'Password must be at least 6 characters')
-      .max(100, 'Password must be at most 100 characters'),
-  }),
-};
-
 export const updateUserSchema = {
   body: z.object({
     name: z

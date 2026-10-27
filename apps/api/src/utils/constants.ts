@@ -5,7 +5,6 @@ export const RESPONSE_MESSAGES = {
     SOMETHING_WRONG: 'Something went wrong',
   },
   USERS: {
-    SIGNED_UP: 'New user created',
     SIGNED_IN: 'Successfully signed in',
     SIGNED_OUT: 'Successfully signed out',
     USER_EMAIL_EXISTS: 'Email already exists',
