@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import userController from '@/controllers/user.controller.js';
+import authController from '@/controllers/auth.controller.js';
 import { validate } from '@/middlewares/validate.middleware.js';
 import {
   requireAdmin,
@@ -8,11 +9,11 @@ import {
 } from '@/middlewares/auth.middleware.js';
 import { rateLimitMiddleware } from '@/middlewares/rateLimit.middleware.js';
 import {
-  registerUserSchema,
   updateUserSchema,
   userIdParamsSchema,
   listUsersSchema,
 } from '@/validations/user.validation.js';
+import { registerSchema } from '@/validations/auth.validation.js';
 import { wrapAsyncHandler } from '@/utils/asyncHandler.js';
 
 const userRouter: Router = Router();
@@ -37,9 +38,9 @@ userRouter.get(
 
 userRouter.post(
   '/',
-  rateLimitMiddleware(10, 60),
-  validate(registerUserSchema),
-  wrapAsyncHandler(userController.register),
+  rateLimitMiddleware(5, 60),
+  validate(registerSchema),
+  wrapAsyncHandler(authController.register),
 );
 
 userRouter.get(

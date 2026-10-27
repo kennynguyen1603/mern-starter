@@ -32,7 +32,10 @@ export default function ProfilePage() {
   });
 
   const onUpdateProfile = async (data: UpdateProfileFormValues) => {
-    await updateProfile.mutateAsync(data);
+    await updateProfile.mutateAsync({
+      ...data,
+      avatar: data.avatar || undefined,
+    });
   };
 
   const onChangePassword = async (data: ChangePasswordFormValues) => {

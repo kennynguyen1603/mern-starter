@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-const passwordField = z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự');
+const passwordField = z
+  .string()
+  .min(8, 'Mật khẩu tối thiểu 8 ký tự')
+  .max(100, 'Mật khẩu tối đa 100 ký tự')
+  .regex(/[A-Z]/, 'Mật khẩu phải có ít nhất 1 chữ hoa')
+  .regex(/[0-9]/, 'Mật khẩu phải có ít nhất 1 chữ số');
 const emailField = z.string().email('Email không hợp lệ');
 
 export const loginSchema = z.object({
@@ -10,7 +15,10 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    name: z.string().min(2, 'Tên tối thiểu 2 ký tự'),
+    name: z
+      .string()
+      .min(2, 'Tên tối thiểu 2 ký tự')
+      .max(50, 'Tên tối đa 50 ký tự'),
     email: emailField,
     password: passwordField,
     confirmPassword: z.string(),

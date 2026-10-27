@@ -36,29 +36,6 @@ components:
           type: string
           format: date-time
 
-    RegisterUserBody:
-      type: object
-      required:
-        - name
-        - email
-        - password
-      properties:
-        name:
-          type: string
-          minLength: 2
-          maxLength: 50
-          example: 'Nguyen Van A'
-        email:
-          type: string
-          format: email
-          example: 'nguyenvana@example.com'
-        password:
-          type: string
-          minLength: 6
-          maxLength: 100
-          format: password
-          example: 'password123'
-
     UpdateUserBody:
       type: object
       properties:
@@ -226,17 +203,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     post:
       summary: Register a new user
-      description: Create a new user account
+      description: Create a new user account (same behavior as POST /auth/register)
       tags: [User]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterUserBody'
+              $ref: '#/components/schemas/AuthRegisterBody'
       responses:
         '201':
           description: Created
@@ -247,12 +236,15 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'New user created'
+                    example: 'Account created successfully'
                   status:
                     type: integer
                     example: 201
                   data:
-                    $ref: '#/components/schemas/User'
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
         '409':
           description: Conflict — Email already exists
           content:
@@ -265,6 +257,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /user/me:
     get:
@@ -292,6 +290,12 @@ paths:
                     $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests
           content:
             application/json:
               schema:
@@ -343,6 +347,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests
           content:
             application/json:
               schema:
@@ -409,6 +419,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     delete:
       summary: Delete user
@@ -459,6 +475,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests
           content:
             application/json:
               schema:
