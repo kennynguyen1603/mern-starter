@@ -102,11 +102,11 @@ export interface IApiError {
   details?: Array<{
     field: string;
     message: string;
-    value?: any;
+    value?: unknown;
   }>;
 }
 
-export interface IApiSuccess<T = any> {
+export interface IApiSuccess<T = unknown> {
   message: string;
   status: number;
   data: T;

@@ -67,7 +67,7 @@ class MyLogger {
     message: string,
     context: string = '',
     requestId: string = '',
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
   ): void {
     this.logger.info(message, { context, requestId, metadata });
   }
@@ -83,7 +83,7 @@ class MyLogger {
     message: string,
     context: string = '',
     requestId: string = '',
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
   ): void {
     this.logger.error(message, { context, requestId, metadata });
   }
@@ -99,7 +99,7 @@ class MyLogger {
     message: string,
     context: string = '',
     requestId: string = '',
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
   ): void {
     this.logger.warn(message, { context, requestId, metadata });
   }
@@ -115,7 +115,7 @@ class MyLogger {
     message: string,
     context: string = '',
     requestId: string = '',
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
   ): void {
     this.logger.debug(message, { context, requestId, metadata });
   }

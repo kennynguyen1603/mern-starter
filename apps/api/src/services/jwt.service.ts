@@ -38,7 +38,7 @@ class JWTService {
     const expiresIn = env.jwt.accessSecretExp || '15m';
 
     return jwt.sign(tokenPayload, secret, {
-      expiresIn: expiresIn as any,
+      expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
       issuer: ISSUER,
       audience: AUDIENCE,
     });
@@ -50,7 +50,7 @@ class JWTService {
     const expiresIn = env.jwt.refreshSecretExp || '7d';
 
     return jwt.sign(tokenPayload, secret, {
-      expiresIn: expiresIn as any,
+      expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
       issuer: ISSUER,
       audience: AUDIENCE,
     });

@@ -1,16 +1,17 @@
+import type { Response } from 'express';
 import { httpStatusCode, reasonPhrases } from '@/core/httpStatusCode.js';
 
 interface SuccessResponseParams {
   message?: string;
   statusCode?: number;
   reasonStatusCode?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export class SuccessResponse {
   message: string;
   status: number;
-  data: any;
+  data: unknown;
 
   constructor({
     message,
@@ -23,7 +24,7 @@ export class SuccessResponse {
     this.data = data;
   }
 
-  send(res: any, headers: Record<string, string> = {}) {
+  send(res: Response, headers: Record<string, string> = {}) {
     Object.entries(headers).forEach(([key, value]) =>
       res.setHeader(key, value),
     );
@@ -39,7 +40,7 @@ export class OkResponse extends SuccessResponse {
   constructor({
     message = reasonPhrases.OK,
     data = null,
-  }: { message?: string; data?: any } = {}) {
+  }: { message?: string; data?: unknown } = {}) {
     super({
       message,
       statusCode: httpStatusCode.OK,
@@ -53,7 +54,7 @@ export class CreatedResponse extends SuccessResponse {
   constructor({
     message = reasonPhrases.CREATED,
     data = null,
-  }: { message?: string; data?: any } = {}) {
+  }: { message?: string; data?: unknown } = {}) {
     super({
       message,
       statusCode: httpStatusCode.CREATED,

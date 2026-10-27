@@ -132,10 +132,10 @@ class UserService {
 
   async getAllUsers(query: IListQuery) {
     return PaginationUtils.paginate(
-      userRepository.getCollection() as any,
+      userRepository.getCollection(),
       query,
       {
-        projection: { password: 0, googleId: 0 } as any,
+        projection: { password: 0, googleId: 0 },
         sort: { createdAt: -1 },
       },
       {

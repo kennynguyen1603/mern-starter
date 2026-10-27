@@ -1,4 +1,4 @@
-import { ErrorResponse } from '@/core/error.response.js';
+import { ErrorResponse, ErrorDetail } from '@/core/error.response.js';
 import reasonPhrases from '@/core/reasonPhrases.js';
 import httpStatusCode from '@/core/statusCodes.js';
 import { logger } from '@/utils/logger.js';
@@ -48,7 +48,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (
   }
 
   // Handle generic / unknown runtime errors
-  let details: any[] | undefined = err.details;
+  let details: ErrorDetail[] | undefined = err.details;
 
   if (process.env.NODE_ENV === 'development') {
     Object.getOwnPropertyNames(err).forEach((key) => {

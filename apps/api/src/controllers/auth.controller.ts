@@ -5,6 +5,16 @@ import { getSecurityContext } from '@/utils/security.utils.js';
 import { RESPONSE_MESSAGES } from '@/utils/constants.js';
 import { UnauthorizedError } from '@/core/error.response.js';
 import { env } from '@/config/env/env.js';
+import type {
+  ChangePasswordBody,
+  EmailBody,
+  GoogleLinkBody,
+  LoginBody,
+  RegisterBody,
+  ResetPasswordBody,
+  SetPasswordBody,
+  VerifyEmailQuery,
+} from '@/validations/auth.validation.js';
 
 const IS_PRODUCTION = env.nodeEnv === 'production';
 
@@ -49,7 +59,8 @@ const extractRefreshToken = (req: Request): string => {
 
 class AuthController {
   register = async (req: Request, res: Response) => {
-    const { name, email, password } = req.validated?.body ?? req.body;
+    const { name, email, password } = (req.validated?.body ??
+      req.body) as RegisterBody;
     const user = await authService.register({ name, email, password });
     return new CreatedResponse({
       message: RESPONSE_MESSAGES.AUTH.REGISTER_SUCCESS,
@@ -58,7 +69,7 @@ class AuthController {
   };
 
   login = async (req: Request, res: Response) => {
-    const { email, password } = req.validated?.body ?? req.body;
+    const { email, password } = (req.validated?.body ?? req.body) as LoginBody;
     const { ip, userAgent, deviceInfo } = getSecurityContext(req);
     const result = await authService.login(
       { email, password },
@@ -125,7 +136,8 @@ class AuthController {
   };
 
   googleLink = async (req: Request, res: Response) => {
-    const { pendingToken, password } = req.validated?.body ?? req.body;
+    const { pendingToken, password } = (req.validated?.body ??
+      req.body) as GoogleLinkBody;
     const { ip, userAgent, deviceInfo } = getSecurityContext(req);
     const result = await authService.linkGoogleAccount(pendingToken, password, {
       ipAddress: ip,
@@ -142,13 +154,13 @@ class AuthController {
   // ─── Email Verification ───────────────────────────────────────────────────
 
   verifyEmail = async (req: Request, res: Response) => {
-    const { token } = req.validated?.query ?? req.query;
-    await authService.verifyEmail(token as string);
+    const { token } = (req.validated?.query ?? req.query) as VerifyEmailQuery;
+    await authService.verifyEmail(token);
     return res.redirect(`${env.frontendUrl}/login?verified=true`);
   };
 
   resendVerification = async (req: Request, res: Response) => {
-    const { email } = req.validated?.body ?? req.body;
+    const { email } = (req.validated?.body ?? req.body) as EmailBody;
     await authService.resendVerification(email);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.EMAIL_VERIFICATION_SENT,
@@ -158,7 +170,7 @@ class AuthController {
   // ─── Password Management ──────────────────────────────────────────────────
 
   forgotPassword = async (req: Request, res: Response) => {
-    const { email } = req.validated?.body ?? req.body;
+    const { email } = (req.validated?.body ?? req.body) as EmailBody;
     await authService.forgotPassword(email);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.FORGOT_PASSWORD_SENT,
@@ -166,7 +178,8 @@ class AuthController {
   };
 
   resetPassword = async (req: Request, res: Response) => {
-    const { email, otp, newPassword } = req.validated?.body ?? req.body;
+    const { email, otp, newPassword } = (req.validated?.body ??
+      req.body) as ResetPasswordBody;
     await authService.resetPassword(email, otp, newPassword);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.PASSWORD_RESET_SUCCESS,
@@ -174,7 +187,8 @@ class AuthController {
   };
 
   changePassword = async (req: Request, res: Response) => {
-    const { currentPassword, newPassword } = req.validated?.body ?? req.body;
+    const { currentPassword, newPassword } = (req.validated?.body ??
+      req.body) as ChangePasswordBody;
     const { userId, sessionId } = req.user!;
     await authService.changePassword(
       userId,
@@ -186,7 +200,8 @@ class AuthController {
   };
 
   setPassword = async (req: Request, res: Response) => {
-    const { newPassword } = req.validated?.body ?? req.body;
+    const { newPassword } = (req.validated?.body ??
+      req.body) as SetPasswordBody;
     await authService.setPassword(req.user!.userId, newPassword);
     return new OkResponse({ message: RESPONSE_MESSAGES.AUTH.PASSWORD_SET });
   };

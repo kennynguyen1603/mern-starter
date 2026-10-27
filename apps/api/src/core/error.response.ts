@@ -1,24 +1,25 @@
+import type { ErrorRequestHandler, Response } from 'express';
 import httpStatusCode from '@/core/statusCodes.js';
 import reasonPhrases from '@/core/reasonPhrases.js';
 
 export interface ErrorDetail {
   field: string;
   message: string;
-  value?: any;
+  value?: unknown;
 }
 
 interface ErrorResponseParams {
   message?: string;
   statusCode?: number;
   reasonStatusCode?: string;
-  data?: any;
+  data?: unknown;
   details?: ErrorDetail[];
   isOperational?: boolean;
 }
 
 export class ErrorResponse extends Error {
   status: number;
-  data: any;
+  data: unknown;
   details?: ErrorDetail[];
   isOperational: boolean;
 
@@ -42,7 +43,7 @@ export class ErrorResponse extends Error {
     }
   }
 
-  send(res: any, headers: Record<string, string> = {}) {
+  send(res: Response, headers: Record<string, string> = {}) {
     Object.entries(headers).forEach(([key, value]) =>
       res.setHeader(key, value),
     );
@@ -57,8 +58,8 @@ export class ErrorResponse extends Error {
   }
 }
 
-export const errorConverter = (err: any, req: any, res: any, next: any) => {
-  let error = err;
+export const errorConverter: ErrorRequestHandler = (err, req, res, next) => {
+  let error = err as ErrorResponse | { statusCode?: number; message?: string };
 
   if (!(error instanceof ErrorResponse)) {
     const statusCode = error.statusCode || httpStatusCode.INTERNAL_SERVER_ERROR;
@@ -75,7 +76,7 @@ export const errorConverter = (err: any, req: any, res: any, next: any) => {
 };
 
 export class BadRequestError extends ErrorResponse {
-  constructor(message = reasonPhrases.BAD_REQUEST, data: any = null) {
+  constructor(message = reasonPhrases.BAD_REQUEST, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.BAD_REQUEST,
@@ -86,7 +87,7 @@ export class BadRequestError extends ErrorResponse {
 }
 
 export class UnauthorizedError extends ErrorResponse {
-  constructor(message = reasonPhrases.UNAUTHORIZED, data: any = null) {
+  constructor(message = reasonPhrases.UNAUTHORIZED, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.UNAUTHORIZED,
@@ -97,7 +98,7 @@ export class UnauthorizedError extends ErrorResponse {
 }
 
 export class NotFoundError extends ErrorResponse {
-  constructor(message = reasonPhrases.NOT_FOUND, data: any = null) {
+  constructor(message = reasonPhrases.NOT_FOUND, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.NOT_FOUND,
@@ -108,7 +109,7 @@ export class NotFoundError extends ErrorResponse {
 }
 
 export class ForbiddenError extends ErrorResponse {
-  constructor(message = reasonPhrases.FORBIDDEN, data: any = null) {
+  constructor(message = reasonPhrases.FORBIDDEN, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.FORBIDDEN,
@@ -119,7 +120,7 @@ export class ForbiddenError extends ErrorResponse {
 }
 
 export class ConflictError extends ErrorResponse {
-  constructor(message = reasonPhrases.CONFLICT, data: any = null) {
+  constructor(message = reasonPhrases.CONFLICT, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.CONFLICT,
@@ -130,7 +131,10 @@ export class ConflictError extends ErrorResponse {
 }
 
 export class InternalServerError extends ErrorResponse {
-  constructor(message = reasonPhrases.INTERNAL_SERVER_ERROR, data: any = null) {
+  constructor(
+    message = reasonPhrases.INTERNAL_SERVER_ERROR,
+    data: unknown = null,
+  ) {
     super({
       message,
       statusCode: httpStatusCode.INTERNAL_SERVER_ERROR,
@@ -155,7 +159,7 @@ export class UnprocessableEntityError extends ErrorResponse {
 }
 
 export class TooManyRequestsError extends ErrorResponse {
-  constructor(message = reasonPhrases.TOO_MANY_REQUESTS, data: any = null) {
+  constructor(message = reasonPhrases.TOO_MANY_REQUESTS, data: unknown = null) {
     super({
       message,
       statusCode: httpStatusCode.TOO_MANY_REQUESTS,

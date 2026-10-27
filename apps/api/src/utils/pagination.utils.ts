@@ -1,4 +1,4 @@
-import { Collection, Document } from 'mongodb';
+import { Collection, Document, Filter, FindOptions } from 'mongodb';
 import { IPaginationMeta, IPaginatedResponse } from '@mern/shared';
 import _ from 'lodash';
 
@@ -23,7 +23,7 @@ export interface IListQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 // Enhanced query options for MongoDB operations
@@ -59,7 +59,9 @@ export interface IFilterOptions {
 /**
  * Validate and normalize pagination parameters
  */
-export function validatePaginationParams(params: any): IPaginationParams {
+export function validatePaginationParams(
+  params: { page?: unknown; limit?: unknown } | undefined,
+): IPaginationParams {
   const page = Math.max(
     1,
     Number(params?.page) || PAGINATION_CONSTANTS.DEFAULT_PAGE,
@@ -114,7 +116,9 @@ export class PaginationUtils {
   /**
    * Validate and normalize pagination parameters
    */
-  static validateParams(params: any): IPaginationParams {
+  static validateParams(
+    params: { page?: unknown; limit?: unknown } | undefined,
+  ): IPaginationParams {
     return validatePaginationParams(params);
   }
 
@@ -185,8 +189,8 @@ export class PaginationUtils {
   static buildMongoQuery(
     listQuery: IListQuery,
     filterOptions?: IFilterOptions,
-  ): Record<string, any> {
-    const query: Record<string, any> = {};
+  ): Record<string, unknown> {
+    const query: Record<string, unknown> = {};
 
     // Text search
     if (listQuery.search && filterOptions?.textSearch) {
@@ -205,7 +209,7 @@ export class PaginationUtils {
 
     // Date range filter
     if (filterOptions?.dateRange) {
-      const dateFilter: any = {};
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
       if (filterOptions.dateRange.start) {
         dateFilter.$gte = filterOptions.dateRange.start;
       }
@@ -267,8 +271,8 @@ export class PaginationUtils {
   /**
    * Enhanced pagination method for MongoDB collections
    */
-  static async paginate<T>(
-    collection: Collection<T & Document>,
+  static async paginate<T extends Document>(
+    collection: Collection<T>,
     listQuery: IListQuery,
     queryOptions: IQueryOptions = {},
     filterOptions?: IFilterOptions,
@@ -281,7 +285,7 @@ export class PaginationUtils {
     const mongoSort = this.buildMongoSort(listQuery);
 
     // Apply query options
-    const findOptions: any = {
+    const findOptions: FindOptions = {
       projection: queryOptions.projection,
       sort: queryOptions.sort || mongoSort,
       skip,
@@ -295,8 +299,8 @@ export class PaginationUtils {
     try {
       // Execute queries in parallel for better performance
       const [items, totalCount] = await Promise.all([
-        collection.find(mongoQuery, findOptions).toArray(),
-        collection.countDocuments(mongoQuery),
+        collection.find(mongoQuery as Filter<T>, findOptions).toArray(),
+        collection.countDocuments(mongoQuery as Filter<T>),
       ]);
 
       const meta = createPaginationMeta(page, limit, totalCount);
@@ -346,7 +350,7 @@ export class PaginationUtils {
     baseUrl: string,
     currentPage: number,
     totalPages: number,
-    queryParams: Record<string, any> = {},
+    queryParams: Record<string, string> = {},
   ): {
     first?: string;
     previous?: string;
@@ -361,7 +365,12 @@ export class PaginationUtils {
       return `${baseUrl}?${params.toString()}`;
     };
 
-    const urls: any = {};
+    const urls: {
+      first?: string;
+      previous?: string;
+      next?: string;
+      last?: string;
+    } = {};
 
     if (currentPage > 1) {
       urls.first = createUrl(1);

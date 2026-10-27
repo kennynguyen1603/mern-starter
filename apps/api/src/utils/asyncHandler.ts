@@ -5,15 +5,15 @@ import { SuccessResponse } from '@/core/success.response.js';
 
 export const wrapRequestHandler = <
   P = ParamsDictionary,
-  ResBody = any,
-  ReqBody = any,
-  ReqQuery = any,
+  ResBody = unknown,
+  ReqBody = unknown,
+  ReqQuery = Record<string, unknown>,
 >(
   fn: (
     req: Request<P, ResBody, ReqBody, ReqQuery>,
     res: Response<ResBody>,
     next: NextFunction,
-  ) => Promise<any> | any,
+  ) => unknown,
 ): RequestHandler<P, ResBody, ReqBody, ReqQuery> => {
   return (
     req: Request<P, ResBody, ReqBody, ReqQuery>,
