@@ -81,3 +81,23 @@ export const requireOwnerOrAdmin = (
 
   next();
 };
+
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    throw new UnauthorizedError(
+      'Authentication required to perform this action',
+    );
+  }
+
+  if (req.user.role !== UserRole.ADMIN) {
+    throw new ForbiddenError(
+      'Access Denied: You do not have permission to access this resource',
+    );
+  }
+
+  next();
+};
