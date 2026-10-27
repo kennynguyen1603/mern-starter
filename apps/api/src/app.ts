@@ -13,6 +13,9 @@ import { errorConverter, NotFoundError } from '@/core/error.response.js';
 
 const app: Express = express();
 
+// Required for secure session cookies and correct req.ip behind a TLS proxy
+app.set('trust proxy', env.trustProxy);
+
 app.use(
   cors({
     origin: [env.frontendUrl, 'http://localhost:5173'],
