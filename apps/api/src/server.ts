@@ -1,9 +1,10 @@
+import type { Server } from 'node:http';
 import app from './app.js';
 import { redis } from '@/config/redis/redis.js';
 import { env } from '@/config/env/env.js';
 import { database } from '@/config/db/db.js';
 
-let server: any;
+let server: Server | undefined;
 
 async function startServer() {
   try {
@@ -28,8 +29,9 @@ startServer();
 const gracefulShutdown = async () => {
   console.log('🛑 Shutting down gracefully...');
   // Stop accepting new connections and let in-flight requests finish
-  if (server)
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+  const activeServer = server;
+  if (activeServer)
+    await new Promise<void>((resolve) => activeServer.close(() => resolve()));
   await database.disconnect();
   await redis.disconnect();
   process.exit(0);

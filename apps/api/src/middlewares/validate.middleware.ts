@@ -15,7 +15,7 @@ export const validate =
   (schema: ValidateSchema): RequestHandler =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const validated: any = {};
+      const validated: NonNullable<Request['validated']> = {};
 
       if (schema.body) {
         validated.body = await schema.body.parseAsync(req.body);
@@ -34,9 +34,9 @@ export const validate =
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const details: ErrorDetail[] = error.issues.map((err: any) => ({
-          field: err.path.join('.'),
-          message: err.message,
+        const details: ErrorDetail[] = error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
         }));
 
         return next(new UnprocessableEntityError('Validation failed', details));

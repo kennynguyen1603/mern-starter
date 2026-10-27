@@ -1,3 +1,5 @@
+import type { Request } from 'express';
+
 /**
  * Create an object composed of the picked object properties
  * @param {Object} object
@@ -27,8 +29,8 @@ const SENSITIVE_FIELDS: string[] = [
 ];
 
 const omitSensitive = (
-  obj: Record<string, any> | undefined,
-): Record<string, any> => {
+  obj: Record<string, unknown> | undefined,
+): Record<string, unknown> => {
   if (!obj || typeof obj !== 'object') return {};
   return Object.keys(obj).reduce(
     (acc, key) => {
@@ -37,16 +39,26 @@ const omitSensitive = (
       }
       return acc;
     },
-    {} as Record<string, any>,
+    {} as Record<string, unknown>,
   );
 };
 
-export const sanitizeRequest = (req: any) => ({
+export interface SanitizedRequest {
+  method: string;
+  url: string;
+  params: Request['params'];
+  query: Record<string, unknown>;
+  body: unknown;
+  ip: string | undefined;
+  userId: string;
+}
+
+export const sanitizeRequest = (req: Request): SanitizedRequest => ({
   method: req.method,
   url: req.originalUrl,
   params: req.params,
   query: req.query,
   body: omitSensitive(req.body),
   ip: req.ip || req.socket?.remoteAddress,
-  userId: req.decodedAuthorization?.userId || 'ANONYMOUS',
+  userId: req.user?.userId || 'ANONYMOUS',
 });

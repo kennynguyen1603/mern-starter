@@ -108,3 +108,12 @@ export const googleLinkSchema = {
     password: z.string({ message: 'Password is required' }).min(1),
   }),
 };
+
+export type LoginBody = z.infer<typeof loginSchema.body>;
+export type RegisterBody = z.infer<typeof registerSchema.body>;
+export type VerifyEmailQuery = z.infer<typeof verifyEmailSchema.query>;
+export type EmailBody = z.infer<typeof forgotPasswordSchema.body>;
+export type ResetPasswordBody = z.infer<typeof resetPasswordSchema.body>;
+export type ChangePasswordBody = z.infer<typeof changePasswordSchema.body>;
+export type SetPasswordBody = z.infer<typeof setPasswordSchema.body>;
+export type GoogleLinkBody = z.infer<typeof googleLinkSchema.body>;

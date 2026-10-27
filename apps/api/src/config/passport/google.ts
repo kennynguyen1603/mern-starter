@@ -14,7 +14,7 @@ export const googleStrategy = new GoogleStrategy(
     if (profile._json.email_verified === false) return done(null, false);
     try {
       const result = await authService.handleGoogleCallback(profile);
-      return done(null, result as any);
+      return done(null, result as unknown as Express.User);
     } catch (error) {
       return done(error as Error, false);
     }

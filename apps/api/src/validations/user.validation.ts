@@ -30,3 +30,7 @@ export const listUsersSchema = {
     sortOrder: z.enum(['ASC', 'DESC']).optional(),
   }),
 };
+
+export type UpdateUserBody = z.infer<typeof updateUserSchema.body>;
+export type UserIdParams = z.infer<typeof userIdParamsSchema.params>;
+export type ListUsersQuery = z.infer<typeof listUsersSchema.query>;
