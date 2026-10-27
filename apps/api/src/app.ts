@@ -13,6 +13,9 @@ import { errorConverter, NotFoundError } from '@/core/error.response.js';
 
 const app: Express = express();
 
+// Required for secure session cookies and correct req.ip behind a TLS proxy
+app.set('trust proxy', env.trustProxy);
+
 app.use(
   cors({
     origin: [env.frontendUrl, 'http://localhost:5173'],
@@ -25,7 +28,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(compression());
-app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }));
+app.use(
+  session({
+    secret: env.sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: env.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60 * 1000,
+    },
+  }),
+);
 app.use(passport.initialize());
 app.use(passport.session());
 

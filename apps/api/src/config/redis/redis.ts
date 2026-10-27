@@ -150,11 +150,12 @@ class Redis {
       const countKey = `${key}:count`;
       const trackKey = `${key}:track`;
 
-      const count = await this.client.incr(countKey);
-
-      if (count === 1) {
-        await this.client.expire(countKey, windowSeconds);
-      }
+      // Atomic INCR + EXPIRE so a crash between them can't leave a key without TTL
+      const [count] = (await this.client
+        .multi()
+        .incr(countKey)
+        .expire(countKey, windowSeconds, 'NX')
+        .exec()) as unknown as [number, number];
 
       await this.client.lPush(trackKey, now.toString());
       await this.client.lTrim(trackKey, 0, 9);
@@ -185,7 +186,8 @@ class Redis {
       return true;
     } catch (error) {
       console.error('Redis rateLimiter error:', error);
-      return true;
+      // Fail closed: deny when the limiter is unavailable
+      return false;
     }
   }
 

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { env } from '@/config/env/env.js';
 import passport from '@/config/passport/passport.js';
 import authController from '@/controllers/auth.controller.js';
 import { validate } from '@/middlewares/validate.middleware.js';
@@ -61,6 +62,7 @@ authRouter.get(
 
 authRouter.get(
   '/google',
+  rateLimitMiddleware(10, 60),
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false,
@@ -69,9 +71,10 @@ authRouter.get(
 
 authRouter.get(
   '/google/callback',
+  rateLimitMiddleware(10, 60),
   passport.authenticate('google', {
     session: false,
-    failureRedirect: '/login?error=google_failed',
+    failureRedirect: `${env.frontendUrl}/login?error=google_failed`,
   }),
   wrapAsyncHandler(authController.googleCallback),
 );
