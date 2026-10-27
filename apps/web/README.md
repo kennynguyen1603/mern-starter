@@ -52,17 +52,17 @@ src/
 
 ## Pages & Routing
 
-| Path | Protection | Description |
-|---|---|---|
-| `/login` | Public | Login with email/password or Google |
-| `/register` | Public | Create a new account |
-| `/forgot-password` | Public | Request OTP reset code |
-| `/reset-password` | Public | Reset password with OTP |
-| `/auth/link-account` | Public | Merge Google account with existing local account |
-| `/` | Protected | Dashboard |
-| `/profile/:id` | Protected (owner/admin) | User profile |
-| `/profile/me/set-password` | Protected | Set password for Google-only accounts |
-| `*` | — | 404 Not Found |
+| Path                       | Protection              | Description                                      |
+| -------------------------- | ----------------------- | ------------------------------------------------ |
+| `/login`                   | Public                  | Login with email/password or Google              |
+| `/register`                | Public                  | Create a new account                             |
+| `/forgot-password`         | Public                  | Request OTP reset code                           |
+| `/reset-password`          | Public                  | Reset password with OTP                          |
+| `/auth/link-account`       | Public                  | Merge Google account with existing local account |
+| `/`                        | Protected               | Dashboard                                        |
+| `/profile/:id`             | Protected (owner/admin) | User profile                                     |
+| `/profile/me/set-password` | Protected               | Set password for Google-only accounts            |
+| `*`                        | —                       | 404 Not Found                                    |
 
 ## Authentication Flow
 
@@ -80,6 +80,7 @@ src/
 ### Automatic token refresh
 
 The Axios interceptor in `api/axios.ts` intercepts 401 responses and:
+
 1. Calls `POST /api/v1/auth/refresh` once
 2. Queues all concurrent requests that arrived during the refresh
 3. Replays the queue on success, or rejects it on failure
@@ -96,11 +97,11 @@ The Axios interceptor in `api/axios.ts` intercepts 401 responses and:
 
 ## State Management
 
-| Concern | Tool |
-|---|---|
-| Authenticated user object | Zustand (`useAuthStore`) |
-| API data (users, sessions…) | TanStack Query |
-| Form data | React Hook Form (local component state) |
+| Concern                     | Tool                                    |
+| --------------------------- | --------------------------------------- |
+| Authenticated user object   | Zustand (`useAuthStore`)                |
+| API data (users, sessions…) | TanStack Query                          |
+| Form data                   | React Hook Form (local component state) |
 
 Zustand holds only the `user` object. Everything else lives in TanStack Query, keeping the global store minimal.
 
@@ -112,11 +113,11 @@ Copy `.env.example` to `.env.development`:
 cp .env.example .env.development
 ```
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `VITE_ACCESS_TOKEN_EXP_MS` | Yes | `900000` | Access token lifetime in ms — must match `JWT_SECRET_ACCESS_TOKEN_EXP` on the backend (15 min = 900 000 ms) |
-| `VITE_API_URL` | No | `http://localhost:8080` | Backend base URL for the Vite proxy |
-| `VITE_PORT` | No | `5173` | Dev server port |
+| Variable                   | Required | Default                 | Description                                                                                                 |
+| -------------------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `VITE_ACCESS_TOKEN_EXP_MS` | Yes      | `900000`                | Access token lifetime in ms — must match `JWT_SECRET_ACCESS_TOKEN_EXP` on the backend (15 min = 900 000 ms) |
+| `VITE_API_URL`             | No       | `http://localhost:8080` | Backend base URL for the Vite proxy                                                                         |
+| `VITE_PORT`                | No       | `5173`                  | Dev server port                                                                                             |
 
 ## Development
 

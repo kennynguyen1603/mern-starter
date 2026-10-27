@@ -113,11 +113,13 @@ class AuthService {
   async logout(refreshToken: string): Promise<void> {
     const result = await tokenService.verifyAndGetRefreshToken(refreshToken);
     if (!result) return;
-    await tokenService.revokeSession(result.dbToken.sessionId!);
+    const { sessionId, userId } = result.dbToken;
+    await tokenService.revokeSession(sessionId!);
+    await tokenService.blacklistSession(sessionId!, userId);
   }
 
   async logoutAll(userId: string): Promise<void> {
-    await tokenService.revokeAllUserSessions(userId);
+    await tokenService.blacklistAndRevokeAllUserSessions(userId);
   }
 
   async refreshTokens(
@@ -383,7 +385,7 @@ class AuthService {
       password: await hashPassword(newPassword),
     });
     await tokenRepository.revokeToken(tokenDoc._id!);
-    await tokenService.revokeAllUserSessions(user._id!);
+    await tokenService.blacklistAndRevokeAllUserSessions(user._id!);
   }
 
   async changePassword(
@@ -414,7 +416,7 @@ class AuthService {
     await userRepository.updateById(userId, {
       password: await hashPassword(newPassword),
     });
-    await tokenRepository.revokeAllUserTokensExceptSession(userId, sessionId);
+    await tokenService.blacklistAndRevokeUserSessionsExcept(userId, sessionId);
   }
 
   async setPassword(userId: string, newPassword: string): Promise<void> {

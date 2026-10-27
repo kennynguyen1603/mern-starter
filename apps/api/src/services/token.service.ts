@@ -67,12 +67,54 @@ class TokenService {
     return tokenRepository.revokeSession(sessionId);
   }
 
-  async revokeAllUserSessions(userId: string | ObjectId): Promise<boolean> {
-    return tokenRepository.revokeAllUserTokens(userId);
-  }
-
   async getUserActiveSessions(userId: string | ObjectId) {
     return tokenRepository.findActiveTokensByUserId(userId);
+  }
+
+  // Blacklist only needs to outlive the longest-lived access token of the session
+  private blacklistExpiresAt(): Date {
+    return new Date(
+      Date.now() + jwtService.getTokenExpirationTimeMS(TokenType.ACCESS),
+    );
+  }
+
+  async blacklistSession(
+    sessionId: string,
+    userId: string | ObjectId,
+  ): Promise<void> {
+    await tokenRepository.blacklistSessions(
+      [{ sessionId, userId: new ObjectId(userId) }],
+      this.blacklistExpiresAt(),
+    );
+  }
+
+  async blacklistAndRevokeAllUserSessions(
+    userId: string | ObjectId,
+  ): Promise<void> {
+    const activeSessions =
+      await tokenRepository.findActiveTokensByUserId(userId);
+    await tokenRepository.blacklistSessions(
+      activeSessions
+        .filter((s) => s.sessionId)
+        .map((s) => ({ sessionId: s.sessionId!, userId: s.userId })),
+      this.blacklistExpiresAt(),
+    );
+    await tokenRepository.revokeAllUserTokens(userId);
+  }
+
+  async blacklistAndRevokeUserSessionsExcept(
+    userId: string | ObjectId,
+    sessionId: string,
+  ): Promise<void> {
+    const activeSessions =
+      await tokenRepository.findActiveTokensByUserId(userId);
+    await tokenRepository.blacklistSessions(
+      activeSessions
+        .filter((s) => s.sessionId && s.sessionId !== sessionId)
+        .map((s) => ({ sessionId: s.sessionId!, userId: s.userId })),
+      this.blacklistExpiresAt(),
+    );
+    await tokenRepository.revokeAllUserTokensExceptSession(userId, sessionId);
   }
 }
 

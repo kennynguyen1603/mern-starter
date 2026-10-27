@@ -5,8 +5,7 @@ import type {
 } from '@mern/shared';
 import api from './axios';
 
-export const getMeApi = () =>
-  api.get<IApiSuccess<IUserResponse>>('/user/me');
+export const getMeApi = () => api.get<IApiSuccess<IUserResponse>>('/user/me');
 
 export const getProfileApi = (id: string) =>
   api.get<IApiSuccess<IUserResponse>>(`/user/${id}`);

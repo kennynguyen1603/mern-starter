@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { setPasswordSchema, type SetPasswordFormValues } from '@/schemas/auth.schema';
+import {
+  setPasswordSchema,
+  type SetPasswordFormValues,
+} from '@/schemas/auth.schema';
 import { useSetPassword } from '@/hooks/useAuthQueries';
 
 export default function SetPasswordPage() {
@@ -12,7 +15,9 @@ export default function SetPasswordPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SetPasswordFormValues>({ resolver: zodResolver(setPasswordSchema) });
+  } = useForm<SetPasswordFormValues>({
+    resolver: zodResolver(setPasswordSchema),
+  });
 
   const onSubmit = async (data: SetPasswordFormValues) => {
     await setPassword.mutateAsync(data.newPassword);
@@ -32,13 +37,17 @@ export default function SetPasswordPage() {
         <div>
           <label>Mật khẩu mới</label>
           <input type="password" {...register('newPassword')} />
-          {errors.newPassword && <p style={{ color: 'red' }}>{errors.newPassword.message}</p>}
+          {errors.newPassword && (
+            <p style={{ color: 'red' }}>{errors.newPassword.message}</p>
+          )}
         </div>
 
         <div>
           <label>Xác nhận mật khẩu</label>
           <input type="password" {...register('confirmNewPassword')} />
-          {errors.confirmNewPassword && <p style={{ color: 'red' }}>{errors.confirmNewPassword.message}</p>}
+          {errors.confirmNewPassword && (
+            <p style={{ color: 'red' }}>{errors.confirmNewPassword.message}</p>
+          )}
         </div>
 
         <button type="submit" disabled={isSubmitting || setPassword.isPending}>

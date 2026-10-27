@@ -5,6 +5,7 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 ## Features
 
 ### Authentication & Security
+
 - **Local auth** — register, login, logout with JWT access + refresh tokens
 - **Google OAuth 2.0** — sign in with Google; account merge flow when the email already exists locally
 - **Token rotation** — refresh token is rotated on every use; token reuse detection immediately revokes all user sessions
@@ -15,6 +16,7 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 - **Email verification** — send and resend verification emails via Resend
 
 ### Backend (`apps/api`)
+
 - Layered architecture: Routes → Middleware → Controllers → Services → Repositories → MongoDB
 - Zod schema validation on all incoming request data
 - Structured, typed error/success response hierarchy
@@ -26,6 +28,7 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 - `PaginationUtils` with text search, date range, and custom filter support
 
 ### Frontend (`apps/web`)
+
 - React 19 + Vite 6 + TypeScript
 - TanStack Query for server state; Zustand for client auth state
 - Axios interceptor — automatically queues concurrent 401s and retries after a single token refresh
@@ -36,23 +39,23 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js ≥ 20, TypeScript 5 |
-| Framework | Express 5 |
-| Database | MongoDB 7 (native driver — no Mongoose) |
-| Cache / Rate limit | Redis 5 |
-| Auth | JWT (`jsonwebtoken`), Passport.js, Google OAuth 2.0 |
-| Email | Resend + Handlebars templates |
-| File storage | Cloudinary |
-| Frontend | React 19, Vite 6 |
-| Server state | TanStack Query 5 |
-| Client state | Zustand 5 |
-| Forms | React Hook Form 7 + Zod 4 |
-| Routing | React Router 7 |
-| HTTP client | Axios |
-| Monorepo | pnpm workspaces |
-| Code quality | ESLint, Prettier, Husky pre-commit hooks |
+| Layer              | Technology                                          |
+| ------------------ | --------------------------------------------------- |
+| Runtime            | Node.js ≥ 20, TypeScript 5                          |
+| Framework          | Express 5                                           |
+| Database           | MongoDB 7 (native driver — no Mongoose)             |
+| Cache / Rate limit | Redis 5                                             |
+| Auth               | JWT (`jsonwebtoken`), Passport.js, Google OAuth 2.0 |
+| Email              | Resend + Handlebars templates                       |
+| File storage       | Cloudinary                                          |
+| Frontend           | React 19, Vite 6                                    |
+| Server state       | TanStack Query 5                                    |
+| Client state       | Zustand 5                                           |
+| Forms              | React Hook Form 7 + Zod 4                           |
+| Routing            | React Router 7                                      |
+| HTTP client        | Axios                                               |
+| Monorepo           | pnpm workspaces                                     |
+| Code quality       | ESLint, Prettier, Husky pre-commit hooks            |
 
 ## Project Structure
 
@@ -122,6 +125,7 @@ cp apps/web/.env.example apps/web/.env.development
 ```
 
 Fill in your credentials. See each app's README for a full variable reference:
+
 - [apps/api/README.md](apps/api/README.md)
 - [apps/web/README.md](apps/web/README.md)
 
@@ -136,10 +140,10 @@ pnpm dev:api
 pnpm dev:web
 ```
 
-| Service | URL |
-|---|---|
-| Frontend | `http://localhost:5173` |
-| API | `http://localhost:8080` |
+| Service      | URL                                 |
+| ------------ | ----------------------------------- |
+| Frontend     | `http://localhost:5173`             |
+| API          | `http://localhost:8080`             |
 | Swagger docs | `http://localhost:8080/api/v1/docs` |
 
 ### 4. Build for production
@@ -150,14 +154,14 @@ pnpm build
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start API + Web in watch mode (concurrently) |
-| `pnpm dev:api` | Start API only |
-| `pnpm dev:web` | Start Web only |
-| `pnpm build` | Build all packages |
-| `pnpm lint` | Lint the entire repo |
-| `pnpm format` | Format all files with Prettier |
+| Command        | Description                                  |
+| -------------- | -------------------------------------------- |
+| `pnpm dev`     | Start API + Web in watch mode (concurrently) |
+| `pnpm dev:api` | Start API only                               |
+| `pnpm dev:web` | Start Web only                               |
+| `pnpm build`   | Build all packages                           |
+| `pnpm lint`    | Lint the entire repo                         |
+| `pnpm format`  | Format all files with Prettier               |
 
 ## API Reference
 
@@ -165,34 +169,34 @@ Base URL: `http://localhost:8080/api/v1`
 
 ### Auth — `/auth`
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/register` | — | Create a local account |
-| POST | `/login` | — | Login, set auth cookies |
-| POST | `/logout` | Required | Revoke current session |
-| POST | `/logout-all` | Required | Revoke all sessions |
-| POST | `/refresh` | — | Rotate refresh token, issue new access token |
-| GET | `/sessions` | Required | List active sessions |
-| GET | `/google` | — | Redirect to Google OAuth |
-| GET | `/google/callback` | — | Google OAuth callback |
-| POST | `/google/link` | — | Merge Google account with an existing local account |
-| GET | `/verify-email?token=` | — | Verify email address |
-| POST | `/resend-verification` | — | Re-send verification email |
-| POST | `/forgot-password` | — | Send OTP reset code to email |
-| POST | `/reset-password` | — | Reset password with OTP |
-| POST | `/change-password` | Required | Change password (keeps current session) |
-| POST | `/set-password` | Required | Set password on OAuth-only account |
+| Method | Path                   | Auth     | Description                                         |
+| ------ | ---------------------- | -------- | --------------------------------------------------- |
+| POST   | `/register`            | —        | Create a local account                              |
+| POST   | `/login`               | —        | Login, set auth cookies                             |
+| POST   | `/logout`              | Required | Revoke current session                              |
+| POST   | `/logout-all`          | Required | Revoke all sessions                                 |
+| POST   | `/refresh`             | —        | Rotate refresh token, issue new access token        |
+| GET    | `/sessions`            | Required | List active sessions                                |
+| GET    | `/google`              | —        | Redirect to Google OAuth                            |
+| GET    | `/google/callback`     | —        | Google OAuth callback                               |
+| POST   | `/google/link`         | —        | Merge Google account with an existing local account |
+| GET    | `/verify-email?token=` | —        | Verify email address                                |
+| POST   | `/resend-verification` | —        | Re-send verification email                          |
+| POST   | `/forgot-password`     | —        | Send OTP reset code to email                        |
+| POST   | `/reset-password`      | —        | Reset password with OTP                             |
+| POST   | `/change-password`     | Required | Change password (keeps current session)             |
+| POST   | `/set-password`        | Required | Set password on OAuth-only account                  |
 
 ### Users — `/user`
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/me` | Required | Get current user profile |
-| GET | `/` | — | List users (paginated, searchable) |
-| POST | `/` | — | Create user |
-| GET | `/:id` | Required + Owner/Admin | Get user by ID |
-| PUT | `/:id` | Required + Owner/Admin | Update user profile |
-| DELETE | `/:id` | Required + Owner/Admin | Delete user |
+| Method | Path   | Auth                   | Description                        |
+| ------ | ------ | ---------------------- | ---------------------------------- |
+| GET    | `/me`  | Required               | Get current user profile           |
+| GET    | `/`    | —                      | List users (paginated, searchable) |
+| POST   | `/`    | —                      | Create user                        |
+| GET    | `/:id` | Required + Owner/Admin | Get user by ID                     |
+| PUT    | `/:id` | Required + Owner/Admin | Update user profile                |
+| DELETE | `/:id` | Required + Owner/Admin | Delete user                        |
 
 A Postman collection is available at `apps/api/postman/`.
 

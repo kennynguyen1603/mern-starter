@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/schemas/auth.schema';
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormValues,
+} from '@/schemas/auth.schema';
 import { useForgotPassword } from '@/hooks/useAuthQueries';
 
 export default function ForgotPasswordPage() {
@@ -13,7 +16,9 @@ export default function ForgotPasswordPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ForgotPasswordFormValues>({ resolver: zodResolver(forgotPasswordSchema) });
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     await forgotPassword.mutateAsync(data.email);
@@ -42,10 +47,15 @@ export default function ForgotPasswordPage() {
         <div>
           <label>Email</label>
           <input type="email" {...register('email')} />
-          {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
+          {errors.email && (
+            <p style={{ color: 'red' }}>{errors.email.message}</p>
+          )}
         </div>
 
-        <button type="submit" disabled={isSubmitting || forgotPassword.isPending}>
+        <button
+          type="submit"
+          disabled={isSubmitting || forgotPassword.isPending}
+        >
           Gửi mã OTP
         </button>
       </form>

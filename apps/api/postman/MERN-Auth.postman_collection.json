@@ -85,11 +85,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"{{testName}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
@@ -103,11 +112,20 @@
               "name": "Register — Email tồn tại (409)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"{{testName}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
@@ -121,11 +139,20 @@
               "name": "Register — Password yếu (422)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"Test\",\n  \"email\": \"weak@example.com\",\n  \"password\": \"123\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/register",
@@ -190,11 +217,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
@@ -208,11 +244,20 @@
               "name": "Login — Sai mật khẩu (401)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"WrongPassword999\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
@@ -225,11 +270,20 @@
               "name": "Login — Google-only account (401)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"googleuser@gmail.com\",\n  \"password\": \"AnyPassword1\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/login",
@@ -308,6 +362,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "if (pm.response.code === 200) {",
+                      "    // Giữ lại token cũ để test blacklist (request \"... sau logout\")",
+                      "    pm.environment.set(\"revokedAccessToken\", pm.environment.get(\"accessToken\"));",
+                      "    pm.environment.set(\"revokedRefreshToken\", pm.environment.get(\"refreshToken\"));",
                       "    pm.environment.unset('accessToken');",
                       "    pm.environment.unset('refreshToken');",
                       "    console.log('🚪 Logged out — tokens cleared from environment');",
@@ -336,6 +393,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "if (pm.response.code === 200) {",
+                      "    // Giữ lại token cũ để test blacklist (request \"... sau logout\")",
+                      "    pm.environment.set(\"revokedAccessToken\", pm.environment.get(\"accessToken\"));",
+                      "    pm.environment.set(\"revokedRefreshToken\", pm.environment.get(\"refreshToken\"));",
                       "    pm.environment.unset('accessToken');",
                       "    pm.environment.unset('refreshToken');",
                       "    console.log('🚪 Logged out from ALL devices — tokens cleared');",
@@ -353,6 +413,78 @@
                   "path": ["api", "{{apiVersion}}", "auth", "logout-all"]
                 },
                 "description": "Đăng xuất khỏi tất cả thiết bị. Revoke toàn bộ session."
+              }
+            },
+            {
+              "name": "Sessions — Access token sau logout (401 Session revoked)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Gửi token đã bị revoke (lưu bởi Logout / Logout All / Reset Password)",
+                      "pm.request.headers.upsert({ key: 'Cookie', value: `accessToken=${pm.environment.get('revokedAccessToken')}` });"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
+                      "pm.test('Session bị blacklist', () => {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.error?.message || body.message).to.eql('Your session has been revoked. Please login again.');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/sessions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "sessions"]
+                },
+                "description": "Chạy sau Logout / Logout All Devices / Reset Password. Access token cũ (chưa hết hạn JWT) phải bị từ chối vì session đã bị blacklist → 401 Session revoked."
+              }
+            },
+            {
+              "name": "Refresh — Refresh token đã revoke (401)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Gửi token đã bị revoke (lưu bởi Logout / Logout All / Reset Password)",
+                      "pm.request.headers.upsert({ key: 'Cookie', value: `refreshToken=${pm.environment.get('revokedRefreshToken')}` });"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "{{apiVersion}}", "auth", "refresh"]
+                },
+                "description": "Chạy sau Logout / Logout All Devices / Reset Password. Refresh token của session đã revoke không thể dùng để lấy token mới → 401."
               }
             }
           ]
@@ -413,11 +545,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"pendingToken\": \"{{pendingLinkToken}}\",\n  \"password\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
@@ -431,11 +572,20 @@
               "name": "Link Google — Token hết hạn (400)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"pendingToken\": \"invalidtoken123\",\n  \"password\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
@@ -448,11 +598,20 @@
               "name": "Link Google — Sai mật khẩu (401)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"pendingToken\": \"{{pendingLinkToken}}\",\n  \"password\": \"WrongPassword1\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/google/link",
@@ -489,7 +648,12 @@
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/verify-email?token={{verifyEmailToken}}",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "{{apiVersion}}", "auth", "verify-email"],
-                  "query": [{ "key": "token", "value": "{{verifyEmailToken}}" }]
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "{{verifyEmailToken}}"
+                    }
+                  ]
                 },
                 "description": "Xác nhận email bằng token từ link trong email.\n\n**Cách dùng:**\n1. Register hoặc Resend Verification\n2. Mở email → copy token từ link (phần sau `?token=`)\n3. Set vào env var `verifyEmailToken`\n4. Gọi request này\n\nServer redirect về `FRONTEND_URL/login?verified=true`."
               }
@@ -503,7 +667,12 @@
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/verify-email?token=invalidtoken123abc",
                   "host": ["{{baseUrl}}"],
                   "path": ["api", "{{apiVersion}}", "auth", "verify-email"],
-                  "query": [{ "key": "token", "value": "invalidtoken123abc" }]
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "invalidtoken123abc"
+                    }
+                  ]
                 }
               }
             },
@@ -511,16 +680,30 @@
               "name": "Resend Verification Email",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
                   "host": ["{{baseUrl}}"],
-                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                  "path": [
+                    "api",
+                    "{{apiVersion}}",
+                    "auth",
+                    "resend-verification"
+                  ]
                 },
                 "description": "Gửi lại email xác nhận. Luôn trả 200 dù email không tồn tại (chống enumeration).\n\n**Rate limit:** 3 lần / giờ per email"
               }
@@ -529,16 +712,30 @@
               "name": "Resend — Đã verified (400)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{currentUserEmail}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
                   "host": ["{{baseUrl}}"],
-                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                  "path": [
+                    "api",
+                    "{{apiVersion}}",
+                    "auth",
+                    "resend-verification"
+                  ]
                 },
                 "description": "Gửi lại cho email đã verified → expect 400."
               }
@@ -547,16 +744,30 @@
               "name": "Resend — Email không tồn tại (200 — chống enumeration)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"nonexistent@example.com\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/resend-verification",
                   "host": ["{{baseUrl}}"],
-                  "path": ["api", "{{apiVersion}}", "auth", "resend-verification"]
+                  "path": [
+                    "api",
+                    "{{apiVersion}}",
+                    "auth",
+                    "resend-verification"
+                  ]
                 },
                 "description": "Server trả 200 dù email không tồn tại để tránh lộ thông tin."
               }
@@ -582,11 +793,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/forgot-password",
@@ -600,11 +820,20 @@
               "name": "Forgot Password — Google-only account (200 — silent skip)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"googleuser@gmail.com\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/forgot-password",
@@ -626,6 +855,9 @@
                       "",
                       "if (pm.response.code === 200) {",
                       "    pm.environment.unset('resetOtp');",
+                      "    // Giữ lại token cũ để test blacklist (request \"... sau logout\")",
+                      "    pm.environment.set(\"revokedAccessToken\", pm.environment.get(\"accessToken\"));",
+                      "    pm.environment.set(\"revokedRefreshToken\", pm.environment.get(\"refreshToken\"));",
                       "    pm.environment.unset('accessToken');",
                       "    pm.environment.unset('refreshToken');",
                       "    console.log('✅ Password reset. Tất cả session đã bị revoke.');",
@@ -637,11 +869,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otp\": \"{{resetOtp}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/reset-password",
@@ -655,11 +896,20 @@
               "name": "Reset Password — OTP sai (400)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otp\": \"000000\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/reset-password",
@@ -692,11 +942,20 @@
               ],
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
@@ -710,11 +969,20 @@
               "name": "Change Password — Sai mật khẩu hiện tại (401)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"currentPassword\": \"WrongPassword1\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
@@ -727,11 +995,20 @@
               "name": "Change Password — Giống mật khẩu cũ (400)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{testPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
@@ -745,13 +1022,24 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" },
-                  { "key": "Cookie", "value": "", "disabled": true }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "",
+                    "disabled": true
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"currentPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/change-password",
@@ -765,11 +1053,20 @@
               "name": "Set Password (Google-only users)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/set-password",
@@ -783,11 +1080,20 @@
               "name": "Set Password — Đã có password (409)",
               "request": {
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"newPassword\": \"{{newPassword}}\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/{{apiVersion}}/auth/set-password",
@@ -814,10 +1120,24 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "{{apiVersion}}", "user"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "", "disabled": true },
-                { "key": "sort", "value": "createdAt", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt",
+                  "disabled": true
+                }
               ]
             },
             "description": "Lấy danh sách users với pagination.\n\n**Query params:**\n- `page`: trang (default 1)\n- `limit`: số item / trang (default 10)\n- `search`: tìm theo name hoặc email\n- `sort`: field để sort"
@@ -833,9 +1153,18 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "{{apiVersion}}", "user"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "test" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "test"
+                }
               ]
             }
           }
@@ -861,11 +1190,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Admin Created User\",\n  \"email\": \"admin-created@example.com\",\n  \"password\": \"Admin@12345\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/{{apiVersion}}/user",
@@ -893,7 +1231,11 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Cookie", "value": "", "disabled": true }
+              {
+                "key": "Cookie",
+                "value": "",
+                "disabled": true
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
@@ -906,11 +1248,20 @@
           "name": "Update Profile",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Updated Name\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/{{apiVersion}}/user/{{targetUserId}}",
@@ -924,16 +1275,30 @@
           "name": "Update Profile — Người khác (403)",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Hacked Name\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/{{apiVersion}}/user/000000000000000000000001",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "{{apiVersion}}", "user", "000000000000000000000001"]
+              "path": [
+                "api",
+                "{{apiVersion}}",
+                "user",
+                "000000000000000000000001"
+              ]
             },
             "description": "Update user khác (không phải mình, không phải admin) → expect 403 Forbidden."
           }

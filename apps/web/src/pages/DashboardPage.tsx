@@ -7,7 +7,9 @@ export default function DashboardPage() {
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Xin chào, <strong>{user?.name}</strong>!</p>
+      <p>
+        Xin chào, <strong>{user?.name}</strong>!
+      </p>
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Thông tin tài khoản</h2>

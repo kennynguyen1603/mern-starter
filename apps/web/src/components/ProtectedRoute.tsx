@@ -8,7 +8,9 @@ export default function ProtectedRoute() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      >
         Đang tải...
       </div>
     );

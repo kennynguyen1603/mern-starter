@@ -342,7 +342,7 @@ const httpStatusCode = {
    */
   NETWORK_AUTHENTICATION_REQUIRED: 511,
 
-  UNKNOW_ERROR: 520
-}
+  UNKNOW_ERROR: 520,
+};
 
-export default httpStatusCode
+export default httpStatusCode;
