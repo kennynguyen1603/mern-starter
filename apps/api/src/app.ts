@@ -25,7 +25,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(compression());
-app.use(session({ secret: 'secret', resave: false, saveUninitialized: false }));
+app.use(
+  session({
+    secret: env.sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: env.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60 * 1000,
+    },
+  }),
+);
 app.use(passport.initialize());
 app.use(passport.session());
 

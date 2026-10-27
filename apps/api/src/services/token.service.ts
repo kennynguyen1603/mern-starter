@@ -50,7 +50,7 @@ class TokenService {
     if (!dbToken) return null;
 
     if (!dbToken.isActive) {
-      await tokenRepository.revokeAllUserTokens(dbToken.userId);
+      await this.blacklistAndRevokeAllUserSessions(dbToken.userId);
       return null;
     }
 

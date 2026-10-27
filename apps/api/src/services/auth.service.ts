@@ -11,6 +11,7 @@ import { tokenRepository } from '@/repositories/token.repository.js';
 import { tokenService } from '@/services/token.service.js';
 import { userService } from '@/services/user.service.js';
 import { emailService } from '@/services/email.service.js';
+import { redis } from '@/config/redis/redis.js';
 import {
   comparePassword,
   hashPassword,
@@ -30,6 +31,9 @@ import {
   TokenType,
   createVerificationTokenDoc,
 } from '@/models/token.model.js';
+
+const MAX_OTP_ATTEMPTS = 5;
+const otpAttemptsKey = (userId: ObjectId) => `otp_attempts:${userId}`;
 
 const assertAccountAllowed = (status: UserStatus) => {
   if (status === UserStatus.INACTIVE) {
@@ -139,7 +143,12 @@ class AuthService {
     }
     assertAccountAllowed(user.status);
 
-    await tokenService.revokeSession(dbToken.sessionId!);
+    // Atomic: only one concurrent refresh can deactivate the session
+    const revoked = await tokenService.revokeSession(dbToken.sessionId!);
+    if (!revoked) {
+      await tokenService.blacklistAndRevokeAllUserSessions(user._id!);
+      throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_REFRESH_TOKEN);
+    }
 
     const mergedDeviceInfo =
       deviceInfo ?? (dbToken.deviceInfo as IDeviceInfo | undefined);
@@ -347,6 +356,7 @@ class AuthService {
       user._id!,
       TokenType.PasswordResetToken,
     );
+    await redis.del(otpAttemptsKey(user._id!));
 
     const otp = generateOTP();
     const doc = createVerificationTokenDoc({
@@ -367,6 +377,18 @@ class AuthService {
     const user = await userRepository.findByEmail(email);
     if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
 
+    // Cap guesses per issued OTP; once exceeded the OTP is burned
+    const attemptsKey = otpAttemptsKey(user._id!);
+    const attempts = await redis.incr(attemptsKey);
+    if (attempts === 1) await redis.expire(attemptsKey, 10 * 60);
+    if (attempts > MAX_OTP_ATTEMPTS) {
+      await tokenRepository.revokeUserTokensByType(
+        user._id!,
+        TokenType.PasswordResetToken,
+      );
+      throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
     const tokenDoc = await tokenRepository.findByToken(
       hashToken(otp),
       TokenType.PasswordResetToken,
@@ -385,6 +407,7 @@ class AuthService {
       password: await hashPassword(newPassword),
     });
     await tokenRepository.revokeToken(tokenDoc._id!);
+    await redis.del(attemptsKey);
     await tokenService.blacklistAndRevokeAllUserSessions(user._id!);
   }
 

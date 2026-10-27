@@ -29,6 +29,7 @@ const schema = z
     DB_NAME: z.string().min(1),
 
     ENCRYPTION_KEY: z.string().min(32),
+    SESSION_SECRET: z.string().min(32),
 
     JWT_SECRET_ACCESS_TOKEN: z.string().min(10),
     JWT_SECRET_ACCESS_TOKEN_EXP: z.string(),
@@ -72,6 +73,7 @@ export const env = Object.freeze({
   nodeEnv: envRaw.NODE_ENV,
   frontendUrl: envRaw.FRONTEND_URL,
   encryptionKey: envRaw.ENCRYPTION_KEY,
+  sessionSecret: envRaw.SESSION_SECRET,
 
   mongo: {
     uri: envRaw.MONGODB_URI,

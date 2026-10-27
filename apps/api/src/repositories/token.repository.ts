@@ -56,7 +56,7 @@ export const tokenRepository = {
 
   async revokeSession(sessionId: string): Promise<boolean> {
     const result = await tokenCollection().updateOne(
-      { sessionId, type: TokenType.RefreshToken },
+      { sessionId, type: TokenType.RefreshToken, isActive: true },
       { $set: { isActive: false, updatedAt: new Date() } },
     );
     return result.modifiedCount > 0;

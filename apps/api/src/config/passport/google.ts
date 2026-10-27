@@ -8,8 +8,10 @@ export const googleStrategy = new GoogleStrategy(
     clientSecret: env.oauth.google.clientSecret,
     callbackURL: env.oauth.google.callbackUrl,
     scope: ['profile', 'email'],
+    state: true,
   },
   async (_accessToken, _refreshToken, profile, done) => {
+    if (profile._json.email_verified === false) return done(null, false);
     try {
       const result = await authService.handleGoogleCallback(profile);
       return done(null, result as any);
