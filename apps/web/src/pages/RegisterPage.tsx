@@ -24,7 +24,10 @@ export default function RegisterPage() {
     return (
       <div>
         <h1>Kiểm tra email của bạn</h1>
-        <p>Chúng tôi đã gửi email xác minh. Vui lòng kiểm tra hộp thư và nhấn vào liên kết để kích hoạt tài khoản.</p>
+        <p>
+          Chúng tôi đã gửi email xác minh. Vui lòng kiểm tra hộp thư và nhấn vào
+          liên kết để kích hoạt tài khoản.
+        </p>
         <Link to="/login">Quay lại đăng nhập</Link>
       </div>
     );
@@ -48,19 +51,25 @@ export default function RegisterPage() {
         <div>
           <label>Email</label>
           <input type="email" {...register('email')} />
-          {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
+          {errors.email && (
+            <p style={{ color: 'red' }}>{errors.email.message}</p>
+          )}
         </div>
 
         <div>
           <label>Mật khẩu</label>
           <input type="password" {...register('password')} />
-          {errors.password && <p style={{ color: 'red' }}>{errors.password.message}</p>}
+          {errors.password && (
+            <p style={{ color: 'red' }}>{errors.password.message}</p>
+          )}
         </div>
 
         <div>
           <label>Xác nhận mật khẩu</label>
           <input type="password" {...register('confirmPassword')} />
-          {errors.confirmPassword && <p style={{ color: 'red' }}>{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && (
+            <p style={{ color: 'red' }}>{errors.confirmPassword.message}</p>
+          )}
         </div>
 
         <button type="submit" disabled={isSubmitting || register_.isPending}>

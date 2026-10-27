@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { resetPasswordSchema, type ResetPasswordFormValues } from '@/schemas/auth.schema';
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormValues,
+} from '@/schemas/auth.schema';
 import { useResetPassword } from '@/hooks/useAuthQueries';
 
 export default function ResetPasswordPage() {
@@ -13,7 +16,9 @@ export default function ResetPasswordPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ResetPasswordFormValues>({ resolver: zodResolver(resetPasswordSchema) });
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
     await resetPassword.mutateAsync(data);
@@ -42,7 +47,9 @@ export default function ResetPasswordPage() {
         <div>
           <label>Email</label>
           <input type="email" {...register('email')} />
-          {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
+          {errors.email && (
+            <p style={{ color: 'red' }}>{errors.email.message}</p>
+          )}
         </div>
 
         <div>
@@ -54,16 +61,23 @@ export default function ResetPasswordPage() {
         <div>
           <label>Mật khẩu mới</label>
           <input type="password" {...register('newPassword')} />
-          {errors.newPassword && <p style={{ color: 'red' }}>{errors.newPassword.message}</p>}
+          {errors.newPassword && (
+            <p style={{ color: 'red' }}>{errors.newPassword.message}</p>
+          )}
         </div>
 
         <div>
           <label>Xác nhận mật khẩu mới</label>
           <input type="password" {...register('confirmNewPassword')} />
-          {errors.confirmNewPassword && <p style={{ color: 'red' }}>{errors.confirmNewPassword.message}</p>}
+          {errors.confirmNewPassword && (
+            <p style={{ color: 'red' }}>{errors.confirmNewPassword.message}</p>
+          )}
         </div>
 
-        <button type="submit" disabled={isSubmitting || resetPassword.isPending}>
+        <button
+          type="submit"
+          disabled={isSubmitting || resetPassword.isPending}
+        >
           Đặt lại mật khẩu
         </button>
       </form>

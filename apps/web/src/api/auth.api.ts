@@ -13,8 +13,7 @@ export const loginApi = (data: ILoginRequest) =>
 export const registerApi = (data: IRegisterRequest) =>
   api.post<IApiSuccess<{ user: IUserResponse }>>('/auth/register', data);
 
-export const logoutApi = () =>
-  api.post<IApiSuccess<null>>('/auth/logout');
+export const logoutApi = () => api.post<IApiSuccess<null>>('/auth/logout');
 
 export const forgotPasswordApi = (email: string) =>
   api.post<IApiSuccess<null>>('/auth/forgot-password', { email });

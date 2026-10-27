@@ -6,7 +6,9 @@ import { RESPONSE_MESSAGES } from '@/utils/constants.js';
 class UserController {
   register = async (req: Request, res: Response) => {
     const { name, email, password } = req.validated?.body ?? req.body;
-    const user = userService.toUserResponse(await userService.createLocalUser({ name, email, password }));
+    const user = userService.toUserResponse(
+      await userService.createLocalUser({ name, email, password }),
+    );
 
     return new CreatedResponse({
       message: RESPONSE_MESSAGES.USERS.SIGNED_UP,

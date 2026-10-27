@@ -53,44 +53,44 @@ src/
 
 ### Auth — `/api/v1/auth`
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/register` | — | Create local account |
-| POST | `/login` | — | Login, set auth cookies |
-| POST | `/logout` | Required | Revoke current session |
-| POST | `/logout-all` | Required | Revoke all sessions |
-| POST | `/refresh` | — | Rotate refresh token, issue new access token |
-| GET | `/sessions` | Required | List active sessions |
-| GET | `/google` | — | Redirect to Google OAuth consent |
-| GET | `/google/callback` | — | Google OAuth callback |
-| POST | `/google/link` | — | Link Google account to existing local account |
-| GET | `/verify-email?token=` | — | Verify email address |
-| POST | `/resend-verification` | — | Re-send verification email |
-| POST | `/forgot-password` | — | Send OTP reset code to email |
-| POST | `/reset-password` | — | Reset password with OTP |
-| POST | `/change-password` | Required | Change password (keeps current session) |
-| POST | `/set-password` | Required | Set password on OAuth-only account |
+| Method | Path                   | Auth     | Description                                   |
+| ------ | ---------------------- | -------- | --------------------------------------------- |
+| POST   | `/register`            | —        | Create local account                          |
+| POST   | `/login`               | —        | Login, set auth cookies                       |
+| POST   | `/logout`              | Required | Revoke current session                        |
+| POST   | `/logout-all`          | Required | Revoke all sessions                           |
+| POST   | `/refresh`             | —        | Rotate refresh token, issue new access token  |
+| GET    | `/sessions`            | Required | List active sessions                          |
+| GET    | `/google`              | —        | Redirect to Google OAuth consent              |
+| GET    | `/google/callback`     | —        | Google OAuth callback                         |
+| POST   | `/google/link`         | —        | Link Google account to existing local account |
+| GET    | `/verify-email?token=` | —        | Verify email address                          |
+| POST   | `/resend-verification` | —        | Re-send verification email                    |
+| POST   | `/forgot-password`     | —        | Send OTP reset code to email                  |
+| POST   | `/reset-password`      | —        | Reset password with OTP                       |
+| POST   | `/change-password`     | Required | Change password (keeps current session)       |
+| POST   | `/set-password`        | Required | Set password on OAuth-only account            |
 
 ### Users — `/api/v1/user`
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/me` | Required | Get current user profile |
-| GET | `/` | — | List all users (paginated) |
-| POST | `/` | — | Create user directly |
-| GET | `/:id` | Required + Owner/Admin | Get user by ID |
-| PUT | `/:id` | Required + Owner/Admin | Update user profile |
-| DELETE | `/:id` | Required + Owner/Admin | Delete user |
+| Method | Path   | Auth                   | Description                |
+| ------ | ------ | ---------------------- | -------------------------- |
+| GET    | `/me`  | Required               | Get current user profile   |
+| GET    | `/`    | —                      | List all users (paginated) |
+| POST   | `/`    | —                      | Create user directly       |
+| GET    | `/:id` | Required + Owner/Admin | Get user by ID             |
+| PUT    | `/:id` | Required + Owner/Admin | Update user profile        |
+| DELETE | `/:id` | Required + Owner/Admin | Delete user                |
 
 ### Query Parameters (list endpoints)
 
-| Param | Type | Description |
-|---|---|---|
-| `page` | number | Page number (default: 1) |
-| `limit` | number | Items per page (default: 10, max: 100) |
-| `search` | string | Text search on `name` and `email` |
-| `sortBy` | string | Field to sort by |
-| `sortOrder` | `ASC` \| `DESC` | Sort direction |
+| Param       | Type            | Description                            |
+| ----------- | --------------- | -------------------------------------- |
+| `page`      | number          | Page number (default: 1)               |
+| `limit`     | number          | Items per page (default: 10, max: 100) |
+| `search`    | string          | Text search on `name` and `email`      |
+| `sortBy`    | string          | Field to sort by                       |
+| `sortOrder` | `ASC` \| `DESC` | Sort direction                         |
 
 ## Response Format
 

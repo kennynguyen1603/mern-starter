@@ -14,7 +14,9 @@ export const loginSchema = {
       .trim()
       .toLowerCase()
       .pipe(z.email('Invalid email address')),
-    password: z.string({ message: 'Password is required' }).min(1, 'Password is required'),
+    password: z
+      .string({ message: 'Password is required' })
+      .min(1, 'Password is required'),
   }),
 };
 
@@ -44,7 +46,9 @@ export const refreshTokenSchema = {
 
 export const verifyEmailSchema = {
   query: z.object({
-    token: z.string({ message: 'Token is required' }).min(1, 'Token is required'),
+    token: z
+      .string({ message: 'Token is required' })
+      .min(1, 'Token is required'),
   }),
 };
 
@@ -85,7 +89,9 @@ export const resetPasswordSchema = {
 
 export const changePasswordSchema = {
   body: z.object({
-    currentPassword: z.string({ message: 'Current password is required' }).min(1),
+    currentPassword: z
+      .string({ message: 'Current password is required' })
+      .min(1),
     newPassword: passwordSchema,
   }),
 };

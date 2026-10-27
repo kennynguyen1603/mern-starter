@@ -1,8 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateProfileSchema, type UpdateProfileFormValues } from '@/schemas/user.schema';
-import { changePasswordSchema, type ChangePasswordFormValues } from '@/schemas/auth.schema';
+import {
+  updateProfileSchema,
+  type UpdateProfileFormValues,
+} from '@/schemas/user.schema';
+import {
+  changePasswordSchema,
+  type ChangePasswordFormValues,
+} from '@/schemas/auth.schema';
 import { useProfile, useUpdateProfile } from '@/hooks/useUserQueries';
 import { useChangePassword } from '@/hooks/useAuthQueries';
 import { useAuthStore } from '@/store/auth.store';
@@ -51,7 +57,9 @@ export default function ProfilePage() {
               <label>Tên</label>
               <input type="text" {...profileForm.register('name')} />
               {profileForm.formState.errors.name && (
-                <p style={{ color: 'red' }}>{profileForm.formState.errors.name.message}</p>
+                <p style={{ color: 'red' }}>
+                  {profileForm.formState.errors.name.message}
+                </p>
               )}
             </div>
 
@@ -59,12 +67,18 @@ export default function ProfilePage() {
               <label>Avatar URL</label>
               <input type="text" {...profileForm.register('avatar')} />
               {profileForm.formState.errors.avatar && (
-                <p style={{ color: 'red' }}>{profileForm.formState.errors.avatar.message}</p>
+                <p style={{ color: 'red' }}>
+                  {profileForm.formState.errors.avatar.message}
+                </p>
               )}
             </div>
 
-            {updateProfile.isSuccess && <p style={{ color: 'green' }}>Đã cập nhật.</p>}
-            {updateProfile.isError && <p style={{ color: 'red' }}>Cập nhật thất bại.</p>}
+            {updateProfile.isSuccess && (
+              <p style={{ color: 'green' }}>Đã cập nhật.</p>
+            )}
+            {updateProfile.isError && (
+              <p style={{ color: 'red' }}>Cập nhật thất bại.</p>
+            )}
 
             <button type="submit" disabled={updateProfile.isPending}>
               Lưu thay đổi
@@ -80,30 +94,49 @@ export default function ProfilePage() {
           <form onSubmit={passwordForm.handleSubmit(onChangePassword)}>
             <div>
               <label>Mật khẩu hiện tại</label>
-              <input type="password" {...passwordForm.register('currentPassword')} />
+              <input
+                type="password"
+                {...passwordForm.register('currentPassword')}
+              />
               {passwordForm.formState.errors.currentPassword && (
-                <p style={{ color: 'red' }}>{passwordForm.formState.errors.currentPassword.message}</p>
+                <p style={{ color: 'red' }}>
+                  {passwordForm.formState.errors.currentPassword.message}
+                </p>
               )}
             </div>
 
             <div>
               <label>Mật khẩu mới</label>
-              <input type="password" {...passwordForm.register('newPassword')} />
+              <input
+                type="password"
+                {...passwordForm.register('newPassword')}
+              />
               {passwordForm.formState.errors.newPassword && (
-                <p style={{ color: 'red' }}>{passwordForm.formState.errors.newPassword.message}</p>
+                <p style={{ color: 'red' }}>
+                  {passwordForm.formState.errors.newPassword.message}
+                </p>
               )}
             </div>
 
             <div>
               <label>Xác nhận mật khẩu mới</label>
-              <input type="password" {...passwordForm.register('confirmNewPassword')} />
+              <input
+                type="password"
+                {...passwordForm.register('confirmNewPassword')}
+              />
               {passwordForm.formState.errors.confirmNewPassword && (
-                <p style={{ color: 'red' }}>{passwordForm.formState.errors.confirmNewPassword.message}</p>
+                <p style={{ color: 'red' }}>
+                  {passwordForm.formState.errors.confirmNewPassword.message}
+                </p>
               )}
             </div>
 
-            {changePassword.isSuccess && <p style={{ color: 'green' }}>Đã đổi mật khẩu.</p>}
-            {changePassword.isError && <p style={{ color: 'red' }}>Đổi mật khẩu thất bại.</p>}
+            {changePassword.isSuccess && (
+              <p style={{ color: 'green' }}>Đã đổi mật khẩu.</p>
+            )}
+            {changePassword.isError && (
+              <p style={{ color: 'red' }}>Đổi mật khẩu thất bại.</p>
+            )}
 
             <button type="submit" disabled={changePassword.isPending}>
               Đổi mật khẩu
