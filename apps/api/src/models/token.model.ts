@@ -9,6 +9,7 @@ export enum TokenType {
   PasswordResetToken = 'passwordResetToken',
   WorkspaceInviteToken = 'workspaceInviteToken',
   AccountLinkToken = 'accountLinkToken',
+  BlacklistedSession = 'blacklistedSession',
 }
 
 export interface IDeviceInfo {

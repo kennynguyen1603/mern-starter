@@ -68,7 +68,7 @@ class JWTService {
     };
   }
 
-  verifyAccessToken(token: string): AccessTokenPayload | null {
+  verifyAccessToken(token: string): AccessTokenPayload | 'expired' | null {
     try {
       const secret = env.jwt.accessSecret!;
       const payload = jwt.verify(token, secret, {
@@ -79,6 +79,7 @@ class JWTService {
       if (payload.type !== TokenType.ACCESS) return null;
       return payload;
     } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) return 'expired';
       return null;
     }
   }

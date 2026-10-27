@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError, ForbiddenError } from '@/core/error.response.js';
 import { jwtService } from '@/services/jwt.service.js';
+import { tokenRepository } from '@/repositories/token.repository.js';
+import { RESPONSE_MESSAGES } from '@/utils/constants.js';
 import { UserRole } from '@mern/shared';
 
 // Extract Access Token: priority HttpOnly cookie, fallback to Authorization header
@@ -24,24 +26,33 @@ const extractAccessToken = (req: Request): string => {
   return token;
 };
 
-export const requireAuth = (
+export const requireAuth = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const token = extractAccessToken(req);
 
-  const payload = jwtService.verifyAccessToken(token);
-  if (!payload) {
-    throw new UnauthorizedError(
-      'Token is invalid or expired. Please login again.',
-    );
+  const result = jwtService.verifyAccessToken(token);
+
+  if (result === 'expired') {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.TOKEN_EXPIRED);
+  }
+  if (!result) {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_ACCESS_TOKEN);
+  }
+
+  const isBlacklisted = await tokenRepository.isSessionBlacklisted(
+    result.sessionId,
+  );
+  if (isBlacklisted) {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.SESSION_REVOKED);
   }
 
   req.user = {
-    userId: payload.userId,
-    role: payload.role,
-    sessionId: payload.sessionId,
+    userId: result.userId,
+    role: result.role,
+    sessionId: result.sessionId,
   };
 
   next();

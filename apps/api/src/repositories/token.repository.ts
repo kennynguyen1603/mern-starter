@@ -28,7 +28,10 @@ export const tokenRepository = {
   async findBySessionId(
     sessionId: string,
   ): Promise<WithId<ITokenDocument> | null> {
-    return tokenCollection().findOne({ sessionId });
+    return tokenCollection().findOne({
+      sessionId,
+      type: TokenType.RefreshToken,
+    });
   },
 
   async findActiveTokensByUserId(
@@ -53,7 +56,7 @@ export const tokenRepository = {
 
   async revokeSession(sessionId: string): Promise<boolean> {
     const result = await tokenCollection().updateOne(
-      { sessionId },
+      { sessionId, type: TokenType.RefreshToken },
       { $set: { isActive: false, updatedAt: new Date() } },
     );
     return result.modifiedCount > 0;
@@ -97,6 +100,34 @@ export const tokenRepository = {
     await tokenCollection().updateOne(
       { _id: new ObjectId(id) },
       { $set: { lastUsedAt: new Date(), updatedAt: new Date() } },
+    );
+  },
+
+  async isSessionBlacklisted(sessionId: string): Promise<boolean> {
+    const doc = await tokenCollection().findOne({
+      sessionId,
+      type: TokenType.BlacklistedSession,
+    });
+    return doc !== null;
+  },
+
+  async blacklistSessions(
+    sessions: Array<{ sessionId: string; userId: ObjectId }>,
+    expiresAt: Date,
+  ): Promise<void> {
+    if (sessions.length === 0) return;
+    const now = new Date();
+    await tokenCollection().insertMany(
+      sessions.map((s) => ({
+        token: s.sessionId,
+        type: TokenType.BlacklistedSession,
+        userId: s.userId,
+        sessionId: s.sessionId,
+        expiresAt,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      })) as ITokenDocument[],
     );
   },
 
