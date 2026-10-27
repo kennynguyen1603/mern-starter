@@ -1,5 +1,6 @@
 import { Collection, Document } from 'mongodb';
 import { IPaginationMeta, IPaginatedResponse } from '@mern/shared';
+import _ from 'lodash';
 
 export const PAGINATION_CONSTANTS = {
   DEFAULT_PAGE: 1,
@@ -189,7 +190,10 @@ export class PaginationUtils {
 
     // Text search
     if (listQuery.search && filterOptions?.textSearch) {
-      const searchRegex = { $regex: listQuery.search, $options: 'i' };
+      const searchRegex = {
+        $regex: _.escapeRegExp(listQuery.search),
+        $options: 'i',
+      };
       if (filterOptions.textSearch.fields.length === 1) {
         query[filterOptions.textSearch.fields[0]] = searchRegex;
       } else {
@@ -231,9 +235,13 @@ export class PaginationUtils {
     // Custom filters
     if (listQuery.filters) {
       Object.entries(listQuery.filters).forEach(([key, value]) => {
+        // Reject operator keys and object values to prevent query injection
+        if (key.startsWith('$')) return;
+        if (_.isPlainObject(value)) return;
+
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
-            query[key] = { $in: value };
+            query[key] = { $in: value.filter((v) => !_.isObject(v)) };
           } else {
             query[key] = value;
           }

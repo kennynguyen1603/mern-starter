@@ -27,6 +27,9 @@ startServer();
 
 const gracefulShutdown = async () => {
   console.log('🛑 Shutting down gracefully...');
+  // Stop accepting new connections and let in-flight requests finish
+  if (server)
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   await database.disconnect();
   await redis.disconnect();
   process.exit(0);

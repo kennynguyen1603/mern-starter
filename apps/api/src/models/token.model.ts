@@ -89,9 +89,17 @@ export async function createTokenIndexes(): Promise<void> {
   const collection = database.database.collection(TOKEN_COLLECTION_NAME);
 
   await collection.createIndexes([
-    { key: { token: 1 }, name: 'idx_token' },
-    { key: { userId: 1 }, name: 'idx_userId' },
-    { key: { sessionId: 1 }, name: 'idx_sessionId' },
+    { key: { token: 1, type: 1 }, name: 'idx_token_type' },
+    { key: { sessionId: 1, type: 1 }, name: 'idx_sessionId_type' },
+    {
+      key: { userId: 1, isActive: 1, type: 1 },
+      name: 'idx_userId_isActive_type',
+    },
     { key: { expiresAt: 1 }, expireAfterSeconds: 0, name: 'idx_expiresAt_ttl' },
   ]);
+
+  // Drop single-field indexes superseded by the compound ones above
+  for (const name of ['idx_token', 'idx_userId', 'idx_sessionId']) {
+    await collection.dropIndex(name).catch(() => {});
+  }
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import userController from '@/controllers/user.controller.js';
 import { validate } from '@/middlewares/validate.middleware.js';
 import {
+  requireAdmin,
   requireAuth,
   requireOwnerOrAdmin,
 } from '@/middlewares/auth.middleware.js';
@@ -28,6 +29,8 @@ userRouter.get(
 userRouter.get(
   '/',
   commonRateLimit,
+  requireAuth,
+  requireAdmin,
   validate(listUsersSchema),
   wrapAsyncHandler(userController.getAllUsers),
 );
