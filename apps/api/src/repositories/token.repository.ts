@@ -143,15 +143,4 @@ export const tokenRepository = {
       })) as ITokenDocument[],
     );
   },
-
-  async deleteById(id: string | ObjectId): Promise<boolean> {
-    const result = await tokenCollection().deleteOne({
-      _id: new ObjectId(id),
-    });
-    return result.deletedCount === 1;
-  },
-
-  getCollection(): Collection<ITokenDocument> {
-    return tokenCollection();
-  },
 };

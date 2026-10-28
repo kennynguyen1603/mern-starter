@@ -26,7 +26,4 @@ Object.assign(process.env, {
   GOOGLE_CALLBACK_URL: 'http://localhost:8080/api/v1/auth/google/callback',
   RESEND_API_KEY: 're_test_key',
   FROM_EMAIL: 'noreply@example.test',
-  CLOUDINARY_CLOUD_NAME: 'test',
-  CLOUDINARY_API_KEY: 'test',
-  CLOUDINARY_API_SECRET: 'test',
 });

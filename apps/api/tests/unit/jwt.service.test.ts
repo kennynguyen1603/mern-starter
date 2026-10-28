@@ -75,9 +75,8 @@ describe('jwtService', () => {
     );
   });
 
-  it('generates random hex session ids and tokens', () => {
+  it('generates random hex session ids', () => {
     expect(jwtService.generateSessionId()).toMatch(/^[0-9a-f]{32}$/);
-    expect(jwtService.generateRandomToken()).toMatch(/^[0-9a-f]{64}$/);
     expect(jwtService.generateSessionId()).not.toBe(
       jwtService.generateSessionId(),
     );

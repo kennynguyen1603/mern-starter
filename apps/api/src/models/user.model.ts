@@ -16,7 +16,6 @@ export interface IUserDocument {
   authProvider: AuthProvider;
   providers: AuthProvider[];
   googleId?: string;
-  // twitterId?: string — reserved for future Twitter integration
   createdAt: Date;
   updatedAt: Date;
 }

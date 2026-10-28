@@ -33,7 +33,7 @@ const loginAdmin = async () => {
 describe('app', () => {
   it('responds on the root route', async () => {
     const res = await request(app).get('/').expect(200);
-    expect(res.text).toContain('Backend of wanderlust app is now accessible');
+    expect(res.text).toBe('API is running');
   });
 
   it('returns 404 for unknown routes', async () => {

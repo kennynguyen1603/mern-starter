@@ -4,6 +4,7 @@ import Handlebars, { TemplateDelegate } from 'handlebars';
 import { Resend } from 'resend';
 import { env } from '@/config/env/env.js';
 import { InternalServerError } from '@/core/error.response.js';
+import { logger } from '@/utils/logger.js';
 
 const APP_NAME = 'MERN App';
 const TEMPLATES_DIR = new URL('../templates/emails/', import.meta.url);
@@ -127,7 +128,9 @@ class EmailService {
     });
 
     if (error) {
-      console.error('Resend Error:', error);
+      logger.error('Resend error', 'EmailService', '', {
+        error: error.message,
+      });
       throw new InternalServerError(
         `Failed to send password reset email: ${error.message}`,
       );

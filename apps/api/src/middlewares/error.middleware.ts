@@ -2,6 +2,7 @@ import { ErrorResponse, ErrorDetail } from '@/core/error.response.js';
 import reasonPhrases from '@/core/reasonPhrases.js';
 import httpStatusCode from '@/core/statusCodes.js';
 import { logger } from '@/utils/logger.js';
+import { env } from '@/config/env/env.js';
 import { sanitizeRequest } from '@/utils/pick.js';
 import { ErrorRequestHandler } from 'express';
 import _ from 'lodash';
@@ -16,7 +17,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (
   if (res.headersSent) return next(err);
 
   // Hide programming error in production
-  if (process.env.NODE_ENV === 'production' && !err.isOperational) {
+  if (env.nodeEnv === 'production' && !err.isOperational) {
     err.status = httpStatusCode.INTERNAL_SERVER_ERROR;
     err.message = reasonPhrases.INTERNAL_SERVER_ERROR;
   }
@@ -50,7 +51,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (
   // Handle generic / unknown runtime errors
   let details: ErrorDetail[] | undefined = err.details;
 
-  if (process.env.NODE_ENV === 'development') {
+  if (env.nodeEnv === 'development') {
     Object.getOwnPropertyNames(err).forEach((key) => {
       Object.defineProperty(err, key, { enumerable: true });
     });

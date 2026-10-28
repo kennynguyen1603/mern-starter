@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 type ParamsDictionary = Record<string, string>;
-import { logger } from './logger.js';
 import { SuccessResponse } from '@/core/success.response.js';
 
 export const wrapRequestHandler = <
@@ -26,10 +25,7 @@ export const wrapRequestHandler = <
           result.send(res);
         }
       })
-      .catch((err) => {
-        logger.error('Error caught in wrapRequestHandler:', err);
-        next(err);
-      });
+      .catch(next);
   };
 };
 

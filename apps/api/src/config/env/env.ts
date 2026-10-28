@@ -10,14 +10,6 @@ config({
   path: path.resolve(process.cwd(), `.env.${options.env || 'development'}`),
 });
 
-// Override env (e.g. --env=production)
-if (options.env) {
-  config({
-    path: path.resolve(process.cwd(), `.env.${options.env}`),
-    override: true,
-  });
-}
-
 const schema = z
   .object({
     PORT: z.coerce.number().default(8080),
@@ -47,11 +39,6 @@ const schema = z
 
     RESEND_API_KEY: z.string().min(1),
     FROM_EMAIL: z.string().min(1),
-    // ACCOUNT_LINK_TOKEN_SECRET: z.string().min(16),
-
-    CLOUDINARY_CLOUD_NAME: z.string(),
-    CLOUDINARY_API_KEY: z.string(),
-    CLOUDINARY_API_SECRET: z.string(),
   })
   .refine((data) => data.REDIS_URL || (data.REDIS_HOST && data.REDIS_PORT), {
     message: 'Either REDIS_URL or REDIS_HOST + REDIS_PORT must be provided',
@@ -105,12 +92,5 @@ export const env = Object.freeze({
   email: {
     resendApiKey: envRaw.RESEND_API_KEY,
     fromEmail: envRaw.FROM_EMAIL,
-    // accountLinkTokenSecret: envRaw.ACCOUNT_LINK_TOKEN_SECRET,
-  },
-
-  cloudinary: {
-    cloudName: envRaw.CLOUDINARY_CLOUD_NAME,
-    apiKey: envRaw.CLOUDINARY_API_KEY,
-    apiSecret: envRaw.CLOUDINARY_API_SECRET,
   },
 } as const);

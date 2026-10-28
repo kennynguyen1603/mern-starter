@@ -1,26 +1,5 @@
 import type { Request } from 'express';
 
-/**
- * Create an object composed of the picked object properties
- * @param {Object} object
- * @param {string[]} keys
- * @returns {Object}
- */
-export const pick = <T extends object, K extends keyof T>(
-  object: T,
-  keys: K[],
-): Pick<T, K> => {
-  return keys.reduce(
-    (obj, key) => {
-      if (key in object) {
-        obj[key] = object[key];
-      }
-      return obj;
-    },
-    {} as Pick<T, K>,
-  );
-};
-
 const SENSITIVE_FIELDS = new Set([
   'password',
   'confirmPassword',

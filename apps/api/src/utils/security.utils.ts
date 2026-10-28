@@ -53,16 +53,3 @@ export function getSecurityContext(req: Request): SecurityContext {
     deviceInfo: parseUserAgent(userAgent),
   };
 }
-
-/**
- * Generate device ID từ user agent và IP
- */
-export function generateDeviceId(
-  userAgent?: string,
-  ipAddress?: string,
-): string {
-  const components = [userAgent || 'unknown', ipAddress || '0.0.0.0'];
-
-  // Create a unique string from the components and hash it
-  return Buffer.from(components.join('|')).toString('base64').slice(0, 32);
-}

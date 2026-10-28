@@ -100,11 +100,6 @@ class UserService {
     id: string,
     data: { name?: string; avatar?: string },
   ): Promise<IUserResponse> {
-    const user = await userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
-    }
-
     const updateData: Partial<IUserDocument> = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
     if (data.avatar !== undefined) updateData.avatar = data.avatar;
@@ -118,11 +113,6 @@ class UserService {
   }
 
   async deleteUser(id: string): Promise<{ id: string }> {
-    const user = await userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
-    }
-
     const deleted = await userRepository.deleteById(id);
     if (!deleted) {
       throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);

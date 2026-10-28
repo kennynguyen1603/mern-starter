@@ -129,10 +129,6 @@ class JWTService {
   generateSessionId(): string {
     return crypto.randomBytes(16).toString('hex');
   }
-
-  generateRandomToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
 }
 
 export const jwtService = JWTService.getInstance();
