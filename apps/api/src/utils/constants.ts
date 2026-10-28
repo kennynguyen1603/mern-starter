@@ -50,6 +50,8 @@ export const RESPONSE_MESSAGES = {
     PASSWORD_ALREADY_SET: 'Password already set. Use change-password instead.',
     GOOGLE_LOGIN_SUCCESS: 'Google login successful',
     ACCOUNT_LINK_SUCCESS: 'Google account linked successfully',
+    GOOGLE_ALREADY_LINKED:
+      'This Google account is already linked to another user',
     TOKEN_EXPIRED: 'Access token has expired. Please refresh your session.',
     INVALID_ACCESS_TOKEN: 'Invalid access token. Please login again.',
     SESSION_REVOKED: 'Your session has been revoked. Please login again.',

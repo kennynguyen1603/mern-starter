@@ -18,7 +18,10 @@ app.set('trust proxy', env.trustProxy);
 
 app.use(
   cors({
-    origin: [env.frontendUrl, 'http://localhost:5173'],
+    origin:
+      env.nodeEnv === 'development'
+        ? [env.frontendUrl, 'http://localhost:5173']
+        : [env.frontendUrl],
     credentials: true,
   }),
 );

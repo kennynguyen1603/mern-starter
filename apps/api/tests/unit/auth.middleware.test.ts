@@ -66,7 +66,7 @@ describe('requireAuth', () => {
   it('rejects an expired access token', async () => {
     const expired = jwt.sign(
       { userId: 'user-1', sessionId: 's-1', type: 'access' },
-      'test-access-secret',
+      'test-access-secret-0123456789abcdef',
       { expiresIn: -10, issuer: 'mern-server', audience: 'mern-client' },
     );
     await expect(

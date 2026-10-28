@@ -32,9 +32,9 @@ const schema = z
     ENCRYPTION_KEY: z.string().min(32),
     SESSION_SECRET: z.string().min(32),
 
-    JWT_SECRET_ACCESS_TOKEN: z.string().min(10),
+    JWT_SECRET_ACCESS_TOKEN: z.string().min(32),
     JWT_SECRET_ACCESS_TOKEN_EXP: z.string(),
-    JWT_SECRET_REFRESH_TOKEN: z.string().min(10),
+    JWT_SECRET_REFRESH_TOKEN: z.string().min(32),
     JWT_SECRET_REFRESH_TOKEN_EXP: z.string(),
 
     REDIS_URL: z.string().optional(),

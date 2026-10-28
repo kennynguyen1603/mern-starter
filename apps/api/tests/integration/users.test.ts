@@ -163,12 +163,41 @@ describe('/api/v1/user/:id', () => {
     expect(await userRepository.findById(user.id)).toBeNull();
   });
 
+  it('revokes the sessions of a deleted user', async () => {
+    const { user, cookies } = await loginUser();
+    await request(app)
+      .delete(`/api/v1/user/${user.id}`)
+      .set('Cookie', cookies)
+      .expect(200);
+
+    const res = await request(app)
+      .get('/api/v1/auth/sessions')
+      .set('Cookie', cookies)
+      .expect(401);
+    expect(res.body.error.message).toBe(
+      'Your session has been revoked. Please login again.',
+    );
+  });
+
   it('rejects an invalid update body with 422', async () => {
     const { user, cookies } = await loginUser();
     await request(app)
       .put(`/api/v1/user/${user.id}`)
       .set('Cookie', cookies)
       .send({ avatar: 'not-a-url' })
+      .expect(422);
+    await request(app)
+      .put(`/api/v1/user/${user.id}`)
+      .set('Cookie', cookies)
+      .send({ avatar: 'javascript:alert(1)' })
+      .expect(422);
+  });
+
+  it('rejects a malformed id with 422', async () => {
+    const { cookies } = await loginAdmin();
+    await request(app)
+      .get('/api/v1/user/not-an-id')
+      .set('Cookie', cookies)
       .expect(422);
   });
 

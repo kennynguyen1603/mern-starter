@@ -34,8 +34,12 @@ import {
   TokenType,
   createVerificationTokenDoc,
 } from '@/models/token.model.js';
+import { logger } from '@/utils/logger.js';
 
 const MAX_OTP_ATTEMPTS = 5;
+
+let dummyHash: Promise<string> | undefined;
+const getDummyHash = () => (dummyHash ??= hashPassword(crypto.randomUUID()));
 const otpAttemptsKey = (userId: ObjectId) => `otp_attempts:${userId}`;
 
 const assertAccountAllowed = (status: UserStatus) => {
@@ -72,11 +76,20 @@ class AuthService {
   }): Promise<IUserResponse> {
     const created = await userService.createLocalUser(data);
     // Fire-and-forget: không block register nếu email gửi lỗi
-    // void this.sendVerificationEmail(
-    //   created._id!.toString(),
-    //   created.email,
-    //   created.name,
-    // );
+    void this.sendVerificationEmail(
+      created._id!.toString(),
+      created.email,
+      created.name,
+    ).catch((err) =>
+      logger.error(
+        'Failed to send verification email',
+        'AuthService.register',
+        '',
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+      ),
+    );
     return userService.toUserResponse(created);
   }
 
@@ -88,6 +101,8 @@ class AuthService {
 
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
+      // Burn a bcrypt compare so unknown emails take as long as wrong passwords
+      await comparePassword(data.password, await getDummyHash());
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
@@ -268,6 +283,13 @@ class AuthService {
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
+    }
+
+    assertAccountAllowed(user.status);
+
+    const owner = await userRepository.findByGoogleId(googleId);
+    if (owner && !owner._id.equals(user._id)) {
+      throw new ConflictError(RESPONSE_MESSAGES.AUTH.GOOGLE_ALREADY_LINKED);
     }
 
     await tokenRepository.revokeToken(tokenDoc._id!);

@@ -59,7 +59,15 @@ export class ErrorResponse extends Error {
 }
 
 export const errorConverter: ErrorRequestHandler = (err, req, res, next) => {
-  let error = err as ErrorResponse | { statusCode?: number; message?: string };
+  let error = err as
+    | ErrorResponse
+    | { statusCode?: number; message?: string; code?: number; name?: string };
+
+  if (!(error instanceof ErrorResponse) && error.code === 11000) {
+    error = new ConflictError();
+  } else if (!(error instanceof ErrorResponse) && error.name === 'BSONError') {
+    error = new BadRequestError('Invalid id');
+  }
 
   if (!(error instanceof ErrorResponse)) {
     const statusCode = error.statusCode || httpStatusCode.INTERNAL_SERVER_ERROR;

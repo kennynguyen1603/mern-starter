@@ -74,6 +74,7 @@ class JWTService {
       const payload = jwt.verify(token, secret, {
         issuer: ISSUER,
         audience: AUDIENCE,
+        algorithms: ['HS256'],
       }) as AccessTokenPayload;
 
       if (payload.type !== TokenType.ACCESS) return null;
@@ -90,11 +91,12 @@ class JWTService {
       const payload = jwt.verify(token, secret, {
         issuer: ISSUER,
         audience: AUDIENCE,
+        algorithms: ['HS256'],
       }) as RefreshTokenPayload;
 
       if (payload.type !== TokenType.REFRESH) return null;
       return payload;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

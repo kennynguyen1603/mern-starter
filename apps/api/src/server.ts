@@ -26,15 +26,23 @@ async function startServer() {
 
 startServer();
 
+let shuttingDown = false;
 const gracefulShutdown = async () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   console.log('🛑 Shutting down gracefully...');
-  // Stop accepting new connections and let in-flight requests finish
-  const activeServer = server;
-  if (activeServer)
-    await new Promise<void>((resolve) => activeServer.close(() => resolve()));
-  await database.disconnect();
-  await redis.disconnect();
-  process.exit(0);
+  try {
+    // Stop accepting new connections and let in-flight requests finish
+    const activeServer = server;
+    if (activeServer)
+      await new Promise<void>((resolve) => activeServer.close(() => resolve()));
+    await database.disconnect();
+    await redis.disconnect();
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
 };
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
