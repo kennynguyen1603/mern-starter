@@ -12,6 +12,7 @@ import { hashPassword } from '@/utils/crypto.js';
 import { validateAndNormalizeEmail } from '@/utils/emailValidation.js';
 import { PaginationUtils, IListQuery } from '@/utils/pagination.utils.js';
 import { RESPONSE_MESSAGES } from '@/utils/constants.js';
+import { tokenService } from '@/services/token.service.js';
 
 class UserService {
   private static instance: UserService;
@@ -99,11 +100,6 @@ class UserService {
     id: string,
     data: { name?: string; avatar?: string },
   ): Promise<IUserResponse> {
-    const user = await userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
-    }
-
     const updateData: Partial<IUserDocument> = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
     if (data.avatar !== undefined) updateData.avatar = data.avatar;
@@ -117,15 +113,11 @@ class UserService {
   }
 
   async deleteUser(id: string): Promise<{ id: string }> {
-    const user = await userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
-    }
-
     const deleted = await userRepository.deleteById(id);
     if (!deleted) {
       throw new NotFoundError(RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS);
     }
+    await tokenService.blacklistAndRevokeAllUserSessions(id);
 
     return { id };
   }

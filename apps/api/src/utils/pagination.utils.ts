@@ -108,81 +108,6 @@ export function createPaginatedResponse<T>(
 // ==========================================
 
 export class PaginationUtils {
-  // Re-export constants for backward compatibility
-  static readonly DEFAULT_PAGE = PAGINATION_CONSTANTS.DEFAULT_PAGE;
-  static readonly DEFAULT_LIMIT = PAGINATION_CONSTANTS.DEFAULT_LIMIT;
-  static readonly MAX_LIMIT = PAGINATION_CONSTANTS.MAX_LIMIT;
-
-  /**
-   * Validate and normalize pagination parameters
-   */
-  static validateParams(
-    params: { page?: unknown; limit?: unknown } | undefined,
-  ): IPaginationParams {
-    return validatePaginationParams(params);
-  }
-
-  /**
-   * Get pagination object from page and limit
-   */
-  static getPagination(
-    page?: number,
-    limit?: number,
-  ): { page: number; limit: number } {
-    return {
-      page: Math.max(1, page || PAGINATION_CONSTANTS.DEFAULT_PAGE),
-      limit: Math.min(
-        limit || PAGINATION_CONSTANTS.DEFAULT_LIMIT,
-        PAGINATION_CONSTANTS.MAX_LIMIT,
-      ),
-    };
-  }
-
-  /**
-   * Get sort object from sortBy and sortOrder
-   */
-  static getSort(
-    sortBy?: string,
-    sortOrder?: 'asc' | 'desc',
-  ): Record<string, 1 | -1> {
-    if (!sortBy) return { createdAt: -1 };
-    return { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
-  }
-
-  /**
-   * Generate pagination metadata
-   */
-  static generatePagination(options: {
-    page: number;
-    limit: number;
-    total: number;
-  }): IPaginationMeta {
-    const { page, limit, total } = options;
-    return createPaginationMeta(page, limit, total);
-  }
-
-  /**
-   * Create pagination metadata
-   */
-  static createMeta(
-    page: number,
-    limit: number,
-    total: number,
-  ): IPaginationMeta {
-    return createPaginationMeta(page, limit, total);
-  }
-
-  /**
-   * Create standardized paginated response
-   */
-  static createResponse<T>(
-    data: T[],
-    meta: IPaginationMeta,
-    message?: string,
-  ): IPaginatedResponse<T> {
-    return createPaginatedResponse(data, meta, message);
-  }
-
   /**
    * Build MongoDB query from list parameters
    */
@@ -296,92 +221,18 @@ export class PaginationUtils {
       findOptions.hint = queryOptions.index;
     }
 
-    try {
-      // Execute queries in parallel for better performance
-      const [items, totalCount] = await Promise.all([
-        collection.find(mongoQuery as Filter<T>, findOptions).toArray(),
-        collection.countDocuments(mongoQuery as Filter<T>),
-      ]);
+    // Execute queries in parallel for better performance
+    const [items, totalCount] = await Promise.all([
+      collection.find(mongoQuery as Filter<T>, findOptions).toArray(),
+      collection.countDocuments(mongoQuery as Filter<T>),
+    ]);
 
-      const meta = createPaginationMeta(page, limit, totalCount);
+    const meta = createPaginationMeta(page, limit, totalCount);
 
-      return createPaginatedResponse(
-        items as T[],
-        meta,
-        `Retrieved ${items.length} items`,
-      );
-    } catch (error) {
-      throw new Error(`Pagination query failed: ${error}`);
-    }
-  }
-
-  /**
-   * Get skip value for manual pagination
-   */
-  static getSkipValue(page: number, limit: number): number {
-    return (page - 1) * limit;
-  }
-
-  /**
-   * Calculate total pages
-   */
-  static getTotalPages(totalItems: number, limit: number): number {
-    return Math.ceil(totalItems / limit);
-  }
-
-  /**
-   * Check if there are more pages
-   */
-  static hasNextPage(page: number, totalPages: number): boolean {
-    return page < totalPages;
-  }
-
-  /**
-   * Check if there are previous pages
-   */
-  static hasPreviousPage(page: number): boolean {
-    return page > 1;
-  }
-
-  /**
-   * Generate pagination URLs (for API responses)
-   */
-  static generatePaginationUrls(
-    baseUrl: string,
-    currentPage: number,
-    totalPages: number,
-    queryParams: Record<string, string> = {},
-  ): {
-    first?: string;
-    previous?: string;
-    next?: string;
-    last?: string;
-  } {
-    const createUrl = (page: number) => {
-      const params = new URLSearchParams({
-        ...queryParams,
-        page: page.toString(),
-      });
-      return `${baseUrl}?${params.toString()}`;
-    };
-
-    const urls: {
-      first?: string;
-      previous?: string;
-      next?: string;
-      last?: string;
-    } = {};
-
-    if (currentPage > 1) {
-      urls.first = createUrl(1);
-      urls.previous = createUrl(currentPage - 1);
-    }
-
-    if (currentPage < totalPages) {
-      urls.next = createUrl(currentPage + 1);
-      urls.last = createUrl(totalPages);
-    }
-
-    return urls;
+    return createPaginatedResponse(
+      items as T[],
+      meta,
+      `Retrieved ${items.length} items`,
+    );
   }
 }

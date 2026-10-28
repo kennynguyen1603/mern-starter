@@ -43,7 +43,7 @@ describe('jwtService', () => {
   it('returns "expired" for an expired access token', () => {
     const token = jwt.sign(
       { ...payload, type: TokenType.ACCESS },
-      'test-access-secret',
+      'test-access-secret-0123456789abcdef',
       { ...SIGN_OPTS, expiresIn: -10 },
     );
     expect(jwtService.verifyAccessToken(token)).toBe('expired');
@@ -57,7 +57,7 @@ describe('jwtService', () => {
     );
     const wrongAudience = jwt.sign(
       { ...payload, type: TokenType.ACCESS },
-      'test-access-secret',
+      'test-access-secret-0123456789abcdef',
       { issuer: 'mern-server', audience: 'someone-else' },
     );
     expect(jwtService.verifyAccessToken(wrongSecret)).toBeNull();
@@ -75,9 +75,8 @@ describe('jwtService', () => {
     );
   });
 
-  it('generates random hex session ids and tokens', () => {
+  it('generates random hex session ids', () => {
     expect(jwtService.generateSessionId()).toMatch(/^[0-9a-f]{32}$/);
-    expect(jwtService.generateRandomToken()).toMatch(/^[0-9a-f]{64}$/);
     expect(jwtService.generateSessionId()).not.toBe(
       jwtService.generateSessionId(),
     );

@@ -18,7 +18,10 @@ import {
   hashToken,
   generateOTP,
 } from '@/utils/crypto.js';
-import { validateAndNormalizeEmail } from '@/utils/emailValidation.js';
+import {
+  normalizeEmail,
+  validateAndNormalizeEmail,
+} from '@/utils/emailValidation.js';
 import {
   BadRequestError,
   ConflictError,
@@ -31,8 +34,12 @@ import {
   TokenType,
   createVerificationTokenDoc,
 } from '@/models/token.model.js';
+import { logger } from '@/utils/logger.js';
 
 const MAX_OTP_ATTEMPTS = 5;
+
+let dummyHash: Promise<string> | undefined;
+const getDummyHash = () => (dummyHash ??= hashPassword(crypto.randomUUID()));
 const otpAttemptsKey = (userId: ObjectId) => `otp_attempts:${userId}`;
 
 const assertAccountAllowed = (status: UserStatus) => {
@@ -69,11 +76,20 @@ class AuthService {
   }): Promise<IUserResponse> {
     const created = await userService.createLocalUser(data);
     // Fire-and-forget: không block register nếu email gửi lỗi
-    // void this.sendVerificationEmail(
-    //   created._id!.toString(),
-    //   created.email,
-    //   created.name,
-    // );
+    void this.sendVerificationEmail(
+      created._id!.toString(),
+      created.email,
+      created.name,
+    ).catch((err) =>
+      logger.error(
+        'Failed to send verification email',
+        'AuthService.register',
+        '',
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+      ),
+    );
     return userService.toUserResponse(created);
   }
 
@@ -85,6 +101,8 @@ class AuthService {
 
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
+      // Burn a bcrypt compare so unknown emails take as long as wrong passwords
+      await comparePassword(data.password, await getDummyHash());
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
@@ -179,10 +197,11 @@ class AuthService {
     },
     deviceInfo?: IDeviceInfo,
   ): Promise<GoogleCallbackResult> {
-    const email = profile.emails?.[0]?.value;
-    if (!email) {
+    const rawEmail = profile.emails?.[0]?.value;
+    if (!rawEmail) {
       throw new BadRequestError('Google account must have a valid email');
     }
+    const email = normalizeEmail(rawEmail);
 
     // 1. Returning Google user
     const userByGoogleId = await userRepository.findByGoogleId(profile.id);
@@ -264,6 +283,13 @@ class AuthService {
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
+    }
+
+    assertAccountAllowed(user.status);
+
+    const owner = await userRepository.findByGoogleId(googleId);
+    if (owner && !owner._id.equals(user._id)) {
+      throw new ConflictError(RESPONSE_MESSAGES.AUTH.GOOGLE_ALREADY_LINKED);
     }
 
     await tokenRepository.revokeToken(tokenDoc._id!);
@@ -356,7 +382,6 @@ class AuthService {
       user._id!,
       TokenType.PasswordResetToken,
     );
-    await redis.del(otpAttemptsKey(user._id!));
 
     const otp = generateOTP();
     const doc = createVerificationTokenDoc({
@@ -377,10 +402,9 @@ class AuthService {
     const user = await userRepository.findByEmail(email);
     if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
 
-    // Cap guesses per issued OTP; once exceeded the OTP is burned
+    // Cap guesses per user per window; requesting a new OTP doesn't reset it
     const attemptsKey = otpAttemptsKey(user._id!);
-    const attempts = await redis.incr(attemptsKey);
-    if (attempts === 1) await redis.expire(attemptsKey, 10 * 60);
+    const attempts = await redis.incrWithExpiry(attemptsKey, 10 * 60);
     if (attempts > MAX_OTP_ATTEMPTS) {
       await tokenRepository.revokeUserTokensByType(
         user._id!,
@@ -389,17 +413,13 @@ class AuthService {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    const tokenDoc = await tokenRepository.findByToken(
+    const tokenDoc = await tokenRepository.findActiveUserToken(
+      user._id!,
       hashToken(otp),
       TokenType.PasswordResetToken,
     );
 
-    if (
-      !tokenDoc ||
-      !tokenDoc.isActive ||
-      tokenDoc.expiresAt < new Date() ||
-      tokenDoc.userId.toString() !== user._id!.toString()
-    ) {
+    if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 

@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { UserStatus } from '@mern/shared';
 import app from '@/app.js';
 import { redis } from '@/config/redis/redis.js';
 import { userRepository } from '@/repositories/user.repository.js';
@@ -243,7 +244,7 @@ describe('Google OAuth', () => {
     const res = await request(app)
       .get('/api/v1/auth/google/callback')
       .expect(302);
-    const match = /\/auth\/link-account\?token=([0-9a-f]{64})$/.exec(
+    const match = /\/auth\/link-account#token=([0-9a-f]{64})$/.exec(
       res.headers.location as string,
     );
     if (!match) throw new Error(`unexpected redirect ${res.headers.location}`);
@@ -286,5 +287,27 @@ describe('Google OAuth', () => {
       .send({ pendingToken, password: 'Wrong12345' })
       .expect(401);
     expect(res.body.error.message).toBe('Invalid email or password');
+  });
+
+  it('refuses to link a banned account', async () => {
+    const { user, pendingToken } = await startMerge();
+    await userRepository.updateById(user.id, { status: UserStatus.BANNED });
+
+    await request(app)
+      .post('/api/v1/auth/google/link')
+      .send({ pendingToken, password: DEFAULT_PASSWORD })
+      .expect(401);
+    expect((await userRepository.findById(user.id))?.googleId).toBeUndefined();
+  });
+
+  it('refuses a Google id already linked to another account', async () => {
+    const { pendingToken } = await startMerge();
+    const owner = await createUser();
+    await userRepository.updateById(owner.id, { googleId: 'link-google' });
+
+    await request(app)
+      .post('/api/v1/auth/google/link')
+      .send({ pendingToken, password: DEFAULT_PASSWORD })
+      .expect(409);
   });
 });

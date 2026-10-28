@@ -37,12 +37,14 @@ authRouter.post(
 authRouter.post(
   '/logout',
   requireAuth,
+  rateLimitMiddleware(20, 60),
   wrapAsyncHandler(authController.logout),
 );
 
 authRouter.post(
   '/logout-all',
   requireAuth,
+  rateLimitMiddleware(20, 60),
   wrapAsyncHandler(authController.logoutAll),
 );
 
@@ -55,6 +57,7 @@ authRouter.post(
 authRouter.get(
   '/sessions',
   requireAuth,
+  rateLimitMiddleware(20, 60),
   wrapAsyncHandler(authController.getSessions),
 );
 
@@ -90,6 +93,7 @@ authRouter.post(
 
 authRouter.get(
   '/verify-email',
+  rateLimitMiddleware(10, 60),
   validate(verifyEmailSchema),
   wrapAsyncHandler(authController.verifyEmail),
 );

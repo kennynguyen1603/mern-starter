@@ -2,6 +2,7 @@ import { MongoClient, Db } from 'mongodb';
 import { env } from '@/config/env/env.js';
 import { createUserIndexes } from '@/models/user.model.js';
 import { createTokenIndexes } from '@/models/token.model.js';
+import { logger } from '@/utils/logger.js';
 
 class Database {
   private static instance: Database;
@@ -35,22 +36,26 @@ class Database {
     await this.client.connect();
     this.db = this.client.db(env.mongo.dbName);
 
-    console.log('✅ MongoDB connected');
+    logger.info('MongoDB connected', 'Database');
 
     try {
       await Promise.all([createUserIndexes(), createTokenIndexes()]);
-      console.log('✅ All indexes created successfully');
+      logger.info('All indexes created successfully', 'Database');
     } catch (error) {
-      console.error('⚠️ Error creating indexes:', error);
+      logger.error('Error creating indexes', 'Database', '', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   async disconnect(): Promise<void> {
     try {
       await this.client.close();
-      console.log('Disconnected from the database');
+      logger.info('Disconnected from the database', 'Database');
     } catch (error) {
-      console.error('Error disconnecting from the database:', error);
+      logger.error('Error disconnecting from the database', 'Database', '', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }

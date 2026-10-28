@@ -18,14 +18,17 @@ app.set('trust proxy', env.trustProxy);
 
 app.use(
   cors({
-    origin: [env.frontendUrl, 'http://localhost:5173'],
+    origin:
+      env.nodeEnv === 'development'
+        ? [env.frontendUrl, 'http://localhost:5173']
+        : [env.frontendUrl],
     credentials: true,
   }),
 );
 
 app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 app.use(compression());
 app.use(
@@ -45,7 +48,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.get('/', (req, res) => {
-  res.send('Yay!! Backend of wanderlust app is now accessible');
+  res.send('API is running');
 });
 app.use('/api/v1', rootRouterV1);
 

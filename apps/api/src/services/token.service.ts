@@ -3,6 +3,7 @@ import { IDeviceInfo, createRefreshTokenDoc } from '@/models/token.model.js';
 import { tokenRepository } from '@/repositories/token.repository.js';
 import { hashToken } from '@/utils/crypto.js';
 import { jwtService, TokenType } from '@/services/jwt.service.js';
+import { logger } from '@/utils/logger.js';
 
 class TokenService {
   private static instance: TokenService;
@@ -58,7 +59,16 @@ class TokenService {
       return null;
     }
 
-    void tokenRepository.updateLastUsed(dbToken._id);
+    void tokenRepository.updateLastUsed(dbToken._id).catch((err) =>
+      logger.error(
+        'Failed to update token lastUsedAt',
+        'TokenService.verifyAndGetRefreshToken',
+        '',
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+      ),
+    );
 
     return { payload, dbToken };
   }

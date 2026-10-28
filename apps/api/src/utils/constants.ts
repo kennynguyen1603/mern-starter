@@ -1,22 +1,7 @@
 export const RESPONSE_MESSAGES = {
-  COMMON: {
-    INTERNAL_SERVER_ERROR: 'Internal Server Error',
-    REQUIRED_FIELDS: 'All fields are required.',
-    SOMETHING_WRONG: 'Something went wrong',
-  },
   USERS: {
-    SIGNED_IN: 'Successfully signed in',
-    SIGNED_OUT: 'Successfully signed out',
-    USER_EMAIL_EXISTS: 'Email already exists',
-    USER_USERNAME_EXISTS: 'Username already exists',
     EMAIL_ALREADY_IN_USE: 'Email have been already used.',
     USER_NOT_EXISTS: "User don't exist",
-    AUTH_CODE_NOT_FOUND: 'Something went wrong',
-    INVALID_PASSWORD: 'Invalid password.',
-    INVALID_TOKEN: 'Token is Invalid or expired!',
-    VALID_TOKEN: 'Token is valid',
-    UNAUTHORIZED_USER: 'You are not authorized!',
-    RE_LOGIN: 'Please log in again',
     UPDATE: 'User updated Successfully!',
     DELETED: 'User deleted successfully!',
     GET_ALL: 'Get all users successfully',
@@ -50,6 +35,8 @@ export const RESPONSE_MESSAGES = {
     PASSWORD_ALREADY_SET: 'Password already set. Use change-password instead.',
     GOOGLE_LOGIN_SUCCESS: 'Google login successful',
     ACCOUNT_LINK_SUCCESS: 'Google account linked successfully',
+    GOOGLE_ALREADY_LINKED:
+      'This Google account is already linked to another user',
     TOKEN_EXPIRED: 'Access token has expired. Please refresh your session.',
     INVALID_ACCESS_TOKEN: 'Invalid access token. Please login again.',
     SESSION_REVOKED: 'Your session has been revoked. Please login again.',

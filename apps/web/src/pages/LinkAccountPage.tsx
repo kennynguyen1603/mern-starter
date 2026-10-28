@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -9,8 +9,9 @@ import { useGoogleLink } from '@/hooks/useAuthQueries';
 
 export default function LinkAccountPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const pendingToken = searchParams.get('token') ?? '';
+  // Token travels in the fragment so it never reaches server logs or Referer
+  const { hash } = useLocation();
+  const pendingToken = new URLSearchParams(hash.slice(1)).get('token') ?? '';
 
   const googleLink = useGoogleLink();
 

@@ -131,7 +131,7 @@ class AuthController {
     }
 
     return res.redirect(
-      `${env.frontendUrl}/auth/link-account?token=${result.pendingToken}`,
+      `${env.frontendUrl}/auth/link-account#token=${result.pendingToken}`,
     );
   };
 

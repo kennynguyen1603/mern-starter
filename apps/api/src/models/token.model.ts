@@ -7,7 +7,6 @@ export enum TokenType {
   RefreshToken = 'refreshToken',
   EmailVerificationToken = 'emailVerificationToken',
   PasswordResetToken = 'passwordResetToken',
-  WorkspaceInviteToken = 'workspaceInviteToken',
   AccountLinkToken = 'accountLinkToken',
   BlacklistedSession = 'blacklistedSession',
 }
@@ -97,9 +96,4 @@ export async function createTokenIndexes(): Promise<void> {
     },
     { key: { expiresAt: 1 }, expireAfterSeconds: 0, name: 'idx_expiresAt_ttl' },
   ]);
-
-  // Drop single-field indexes superseded by the compound ones above
-  for (const name of ['idx_token', 'idx_userId', 'idx_sessionId']) {
-    await collection.dropIndex(name).catch(() => {});
-  }
 }

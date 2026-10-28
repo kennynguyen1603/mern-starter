@@ -25,6 +25,19 @@ export const tokenRepository = {
     return tokenCollection().findOne({ token, type });
   },
 
+  async findActiveUserToken(
+    userId: string | ObjectId,
+    token: string,
+    type: TokenType,
+  ): Promise<WithId<ITokenDocument> | null> {
+    return tokenCollection().findOne({
+      userId: new ObjectId(userId),
+      token,
+      type,
+      isActive: true,
+    });
+  },
+
   async findBySessionId(
     sessionId: string,
   ): Promise<WithId<ITokenDocument> | null> {
@@ -129,16 +142,5 @@ export const tokenRepository = {
         updatedAt: now,
       })) as ITokenDocument[],
     );
-  },
-
-  async deleteById(id: string | ObjectId): Promise<boolean> {
-    const result = await tokenCollection().deleteOne({
-      _id: new ObjectId(id),
-    });
-    return result.deletedCount === 1;
-  },
-
-  getCollection(): Collection<ITokenDocument> {
-    return tokenCollection();
   },
 };

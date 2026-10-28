@@ -24,7 +24,6 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 - Winston logging with daily file rotation
 - Swagger/OpenAPI documentation (available in development at `/api/v1/docs`)
 - Device and browser info captured per session (`ua-parser-js`)
-- Cloudinary integration configured and ready to wire up
 - `PaginationUtils` with text search, date range, and custom filter support
 
 ### Frontend (`apps/web`)
@@ -47,7 +46,6 @@ A production-ready monorepo boilerplate for quickly bootstrapping full-stack app
 | Cache / Rate limit | Redis 5                                             |
 | Auth               | JWT (`jsonwebtoken`), Passport.js, Google OAuth 2.0 |
 | Email              | Resend + Handlebars templates                       |
-| File storage       | Cloudinary                                          |
 | Frontend           | React 19, Vite 6                                    |
 | Server state       | TanStack Query 5                                    |
 | Client state       | Zustand 5                                           |
@@ -64,7 +62,7 @@ mern-starter/
 ├── apps/
 │   ├── api/                  # Express backend (@mern/api)
 │   │   ├── src/
-│   │   │   ├── config/       # DB, Redis, Passport, env (Zod-validated), Cloudinary
+│   │   │   ├── config/       # DB, Redis, Passport, env (Zod-validated)
 │   │   │   ├── controllers/  # Thin request handlers
 │   │   │   ├── core/         # ErrorResponse hierarchy, SuccessResponse, HTTP status codes
 │   │   │   ├── middlewares/  # requireAuth, validate (Zod), rateLimit (Redis), error handler
@@ -102,7 +100,6 @@ mern-starter/
 - **Redis** — local instance or [Redis Cloud](https://redis.io/cloud/)
 - **Google Cloud Console** project with OAuth 2.0 credentials ([guide](https://developers.google.com/identity/protocols/oauth2))
 - **Resend** account for transactional email ([resend.com](https://resend.com))
-- **Cloudinary** account for file uploads ([cloudinary.com](https://cloudinary.com))
 
 ## Getting Started
 

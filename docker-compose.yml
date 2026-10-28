@@ -38,6 +38,8 @@ services:
       PORT: 8080
       MONGODB_URI: mongodb://mongo:27017
       REDIS_URL: redis://redis:6379
+      # Behind the web nginx proxy (one hop) so req.ip comes from X-Forwarded-For.
+      TRUST_PROXY: 1
     # Exposed for the Google OAuth callback (GOOGLE_CALLBACK_URL).
     ports:
       - '${API_PORT:-8080}:8080'
