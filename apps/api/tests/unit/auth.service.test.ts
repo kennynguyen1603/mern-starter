@@ -9,6 +9,7 @@ import { redis } from '@/config/redis/redis.js';
 import { clearDb, closeTestDb, connectTestDb } from '../helpers/db.js';
 import { createUser, DEFAULT_PASSWORD } from '../helpers/factories.js';
 import { googleProfile } from '../helpers/fakeGoogle.js';
+import { emailService } from '@/services/email.service.js';
 
 type MockRedis = typeof redis & { __reset: () => void };
 
@@ -112,6 +113,17 @@ describe('authService.login', () => {
       401,
       message,
     );
+  });
+
+  it('keeps "+" in the address and matches case-insensitively', async () => {
+    const { id, email } = await createUser({ email: 'Bob+Tag@Example.com' });
+    expect(email).toBe('bob+tag@example.com');
+
+    const result = await authService.login({
+      email: 'BOB+tag@example.com',
+      password: DEFAULT_PASSWORD,
+    });
+    expect(result.user._id).toBe(id);
   });
 
   it('rejects password login for a Google-only account', async () => {
@@ -247,6 +259,16 @@ describe('authService.handleGoogleCallback', () => {
     expect(result.pendingToken).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it('matches an existing local account regardless of email case', async () => {
+    await createUser({ email: 'mixed@example.com' });
+
+    const result = await authService.handleGoogleCallback(
+      googleProfile({ id: 'g-mixed', email: 'Mixed@Example.COM' }),
+    );
+
+    expect(result.type).toBe('merge_required');
+  });
+
   it('creates a new Google user', async () => {
     const result = await authService.handleGoogleCallback(
       googleProfile({ id: 'new-google', email: 'new@example.com' }),
@@ -344,5 +366,57 @@ describe('authService.linkGoogleAccount', () => {
       'Invalid email or password',
     );
     expect((await userRepository.findById(user.id))?.googleId).toBeUndefined();
+  });
+});
+
+describe('authService password reset', () => {
+  const INVALID_OTP = 'Token is invalid or expired';
+  const sendOtp = emailService.sendPasswordResetOTP as jest.Mock;
+  const lastOtp = () => sendOtp.mock.calls.at(-1)![1] as string;
+  const wrongOtp = (otp: string) => (otp === '000000' ? '111111' : '000000');
+
+  beforeEach(() => sendOtp.mockClear());
+
+  it('resets the password with the emailed OTP', async () => {
+    const { email } = await createUser();
+    await authService.forgotPassword(email);
+
+    await authService.resetPassword(email, lastOtp(), 'NewPassword123');
+
+    await expect(
+      authService.login({ email, password: 'NewPassword123' }),
+    ).resolves.toBeDefined();
+  });
+
+  it('does not reset the attempt counter when a new OTP is requested', async () => {
+    const { email } = await createUser();
+    await authService.forgotPassword(email);
+    for (let i = 0; i < 5; i++) {
+      await expectRejection(
+        authService.resetPassword(email, wrongOtp(lastOtp()), 'NewPassword123'),
+        400,
+        INVALID_OTP,
+      );
+    }
+
+    await authService.forgotPassword(email);
+    await expectRejection(
+      authService.resetPassword(email, lastOtp(), 'NewPassword123'),
+      400,
+      INVALID_OTP,
+    );
+  });
+
+  it("rejects another user's OTP", async () => {
+    const alice = await createUser();
+    const bob = await createUser();
+    await authService.forgotPassword(alice.email);
+    await authService.forgotPassword(bob.email);
+
+    await expectRejection(
+      authService.resetPassword(alice.email, lastOtp(), 'NewPassword123'),
+      400,
+      INVALID_OTP,
+    );
   });
 });

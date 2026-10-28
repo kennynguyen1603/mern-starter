@@ -1,6 +1,5 @@
 // In-memory stand-in for src/config/redis/redis.ts (only the methods the app uses).
-// rateLimiter mirrors the INCR-per-window counter but skips the real
-// "requests < 100ms apart are suspicious" rule so Supertest bursts are not blocked.
+// TTLs are ignored; tests call __reset between cases instead.
 const store = new Map<string, string>();
 
 export const redis = {
@@ -27,8 +26,11 @@ export const redis = {
   async expire(): Promise<boolean> {
     return true;
   },
+  async incrWithExpiry(key: string): Promise<number> {
+    return redis.incr(key);
+  },
   async rateLimiter(key: string, limit: number): Promise<boolean> {
-    const count = await redis.incr(`${key}:count`);
+    const count = await redis.incrWithExpiry(`${key}:count`);
     return count <= limit;
   },
   __reset(): void {

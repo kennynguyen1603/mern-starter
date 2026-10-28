@@ -18,7 +18,10 @@ import {
   hashToken,
   generateOTP,
 } from '@/utils/crypto.js';
-import { validateAndNormalizeEmail } from '@/utils/emailValidation.js';
+import {
+  normalizeEmail,
+  validateAndNormalizeEmail,
+} from '@/utils/emailValidation.js';
 import {
   BadRequestError,
   ConflictError,
@@ -179,10 +182,11 @@ class AuthService {
     },
     deviceInfo?: IDeviceInfo,
   ): Promise<GoogleCallbackResult> {
-    const email = profile.emails?.[0]?.value;
-    if (!email) {
+    const rawEmail = profile.emails?.[0]?.value;
+    if (!rawEmail) {
       throw new BadRequestError('Google account must have a valid email');
     }
+    const email = normalizeEmail(rawEmail);
 
     // 1. Returning Google user
     const userByGoogleId = await userRepository.findByGoogleId(profile.id);
@@ -356,7 +360,6 @@ class AuthService {
       user._id!,
       TokenType.PasswordResetToken,
     );
-    await redis.del(otpAttemptsKey(user._id!));
 
     const otp = generateOTP();
     const doc = createVerificationTokenDoc({
@@ -377,10 +380,9 @@ class AuthService {
     const user = await userRepository.findByEmail(email);
     if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
 
-    // Cap guesses per issued OTP; once exceeded the OTP is burned
+    // Cap guesses per user per window; requesting a new OTP doesn't reset it
     const attemptsKey = otpAttemptsKey(user._id!);
-    const attempts = await redis.incr(attemptsKey);
-    if (attempts === 1) await redis.expire(attemptsKey, 10 * 60);
+    const attempts = await redis.incrWithExpiry(attemptsKey, 10 * 60);
     if (attempts > MAX_OTP_ATTEMPTS) {
       await tokenRepository.revokeUserTokensByType(
         user._id!,
@@ -389,17 +391,13 @@ class AuthService {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    const tokenDoc = await tokenRepository.findByToken(
+    const tokenDoc = await tokenRepository.findActiveUserToken(
+      user._id!,
       hashToken(otp),
       TokenType.PasswordResetToken,
     );
 
-    if (
-      !tokenDoc ||
-      !tokenDoc.isActive ||
-      tokenDoc.expiresAt < new Date() ||
-      tokenDoc.userId.toString() !== user._id!.toString()
-    ) {
+    if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
 

@@ -136,6 +136,17 @@ class Redis {
     return result === 1;
   }
 
+  // Atomic INCR + EXPIRE NX so a crash between them can't leave a key without TTL,
+  // and the window starts at the first hit instead of sliding on every hit.
+  async incrWithExpiry(key: string, seconds: number): Promise<number> {
+    const [count] = (await this.client
+      .multi()
+      .incr(key)
+      .expire(key, seconds, 'NX')
+      .exec()) as unknown as [number, number];
+    return count;
+  }
+
   async ttl(key: string): Promise<number> {
     return await this.client.ttl(key);
   }
@@ -146,44 +157,8 @@ class Redis {
     windowSeconds: number,
   ): Promise<boolean> {
     try {
-      const now = Date.now();
-      const countKey = `${key}:count`;
-      const trackKey = `${key}:track`;
-
-      // Atomic INCR + EXPIRE so a crash between them can't leave a key without TTL
-      const [count] = (await this.client
-        .multi()
-        .incr(countKey)
-        .expire(countKey, windowSeconds, 'NX')
-        .exec()) as unknown as [number, number];
-
-      await this.client.lPush(trackKey, now.toString());
-      await this.client.lTrim(trackKey, 0, 9);
-      await this.client.expire(trackKey, windowSeconds);
-
-      const timestamps = await this.client.lRange(trackKey, 0, -1);
-      const times = timestamps.map((t: string) => parseInt(t));
-
-      let suspicious = false;
-      if (times.length > 1) {
-        const tooFast = times.some((time: number, i: number) => {
-          if (i === times.length - 1) return false;
-          return times[i] - times[i + 1] < 100;
-        });
-
-        if (tooFast) {
-          suspicious = true;
-          await this.client.set(`${key}:suspicious`, '1', {
-            EX: 24 * 60 * 60,
-          });
-        }
-      }
-
-      if (suspicious || count > limit) {
-        return false;
-      }
-
-      return true;
+      const count = await this.incrWithExpiry(`${key}:count`, windowSeconds);
+      return count <= limit;
     } catch (error) {
       console.error('Redis rateLimiter error:', error);
       // Fail closed: deny when the limiter is unavailable
