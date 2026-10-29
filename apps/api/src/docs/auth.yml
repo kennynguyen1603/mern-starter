@@ -285,7 +285,7 @@ paths:
   /auth/refresh:
     post:
       summary: Refresh access token
-      description: Obtain a new pair of tokens using a valid refresh token
+      description: Rotate the token pair. New tokens are set as HttpOnly cookies only, never returned in the body
       tags: [Auth]
       requestBody:
         required: false
@@ -309,7 +309,8 @@ paths:
                     type: integer
                     example: 200
                   data:
-                    $ref: '#/components/schemas/TokensResponse'
+                    nullable: true
+                    example: null
         '401':
           description: Unauthorized — Invalid refresh token
           content:

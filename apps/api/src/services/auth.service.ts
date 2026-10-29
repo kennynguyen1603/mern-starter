@@ -25,6 +25,7 @@ import {
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
   UnauthorizedError,
 } from '@/core/error.response.js';
@@ -40,7 +41,7 @@ const MAX_OTP_ATTEMPTS = 5;
 
 let dummyHash: Promise<string> | undefined;
 const getDummyHash = () => (dummyHash ??= hashPassword(crypto.randomUUID()));
-const otpAttemptsKey = (userId: ObjectId) => `otp_attempts:${userId}`;
+const otpAttemptsKey = (email: string) => `otp_attempts:${email}`;
 
 const assertAccountAllowed = (status: UserStatus) => {
   if (status === UserStatus.INACTIVE) {
@@ -115,6 +116,11 @@ class AuthService {
     const isPasswordValid = await comparePassword(data.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_CREDENTIALS);
+    }
+
+    // Checked after the password so it doesn't reveal which emails are registered
+    if (!user.isEmailVerified) {
+      throw new ForbiddenError(RESPONSE_MESSAGES.AUTH.EMAIL_NOT_VERIFIED);
     }
 
     const tokens = await tokenService.generateAuthTokens(
@@ -399,19 +405,21 @@ class AuthService {
     otp: string,
     newPassword: string,
   ): Promise<void> {
-    const user = await userRepository.findByEmail(email);
-    if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
-
-    // Cap guesses per user per window; requesting a new OTP doesn't reset it
-    const attemptsKey = otpAttemptsKey(user._id!);
+    // Cap guesses per email per window, counted before the lookup so unknown
+    // emails behave exactly like known ones; requesting a new OTP doesn't reset it
+    const attemptsKey = otpAttemptsKey(email);
     const attempts = await redis.incrWithExpiry(attemptsKey, 10 * 60);
+    const user = await userRepository.findByEmail(email);
     if (attempts > MAX_OTP_ATTEMPTS) {
-      await tokenRepository.revokeUserTokensByType(
-        user._id!,
-        TokenType.PasswordResetToken,
-      );
+      if (user) {
+        await tokenRepository.revokeUserTokensByType(
+          user._id!,
+          TokenType.PasswordResetToken,
+        );
+      }
       throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
     }
+    if (!user) throw new BadRequestError(RESPONSE_MESSAGES.AUTH.INVALID_TOKEN);
 
     const tokenDoc = await tokenRepository.findActiveUserToken(
       user._id!,

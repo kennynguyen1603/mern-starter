@@ -9,6 +9,7 @@ Object.assign(process.env, {
   PORT: '8080',
   NODE_ENV: 'test',
   FRONTEND_URL: 'http://localhost:5173',
+  ADMIN_URL: 'http://localhost:5174',
   TRUST_PROXY: '0',
   MONGODB_URI: fs.existsSync(uriFile)
     ? fs.readFileSync(uriFile, 'utf8')

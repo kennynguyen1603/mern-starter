@@ -111,7 +111,6 @@ class AuthController {
     setAuthCookies(res, tokens);
     return new OkResponse({
       message: RESPONSE_MESSAGES.AUTH.REFRESH_SUCCESS,
-      data: { accessToken: tokens.accessToken },
     });
   };
 

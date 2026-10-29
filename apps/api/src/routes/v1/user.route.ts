@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import userController from '@/controllers/user.controller.js';
-import authController from '@/controllers/auth.controller.js';
 import { validate } from '@/middlewares/validate.middleware.js';
 import {
   requireAdmin,
@@ -13,40 +12,33 @@ import {
   userIdParamsSchema,
   listUsersSchema,
 } from '@/validations/user.validation.js';
-import { registerSchema } from '@/validations/auth.validation.js';
 import { wrapAsyncHandler } from '@/utils/asyncHandler.js';
 
 const userRouter: Router = Router();
 
+// Runs after requireAuth so the limit is keyed per user, not per IP
 const commonRateLimit = rateLimitMiddleware(10, 60);
 
 userRouter.get(
   '/me',
-  commonRateLimit,
   requireAuth,
+  commonRateLimit,
   wrapAsyncHandler(userController.getMe),
 );
 
 userRouter.get(
   '/',
-  commonRateLimit,
   requireAuth,
+  commonRateLimit,
   requireAdmin,
   validate(listUsersSchema),
   wrapAsyncHandler(userController.getAllUsers),
 );
 
-userRouter.post(
-  '/',
-  rateLimitMiddleware(5, 60),
-  validate(registerSchema),
-  wrapAsyncHandler(authController.register),
-);
-
 userRouter.get(
   '/:id',
-  commonRateLimit,
   requireAuth,
+  commonRateLimit,
   requireOwnerOrAdmin,
   validate(userIdParamsSchema),
   wrapAsyncHandler(userController.getProfile),
@@ -54,8 +46,8 @@ userRouter.get(
 
 userRouter.put(
   '/:id',
-  commonRateLimit,
   requireAuth,
+  commonRateLimit,
   requireOwnerOrAdmin,
   validate(updateUserSchema),
   wrapAsyncHandler(userController.updateProfile),
@@ -63,8 +55,8 @@ userRouter.put(
 
 userRouter.delete(
   '/:id',
-  commonRateLimit,
   requireAuth,
+  commonRateLimit,
   requireOwnerOrAdmin,
   validate(userIdParamsSchema),
   wrapAsyncHandler(userController.deleteUser),

@@ -17,6 +17,7 @@ export const RESPONSE_MESSAGES = {
     ACCOUNT_INACTIVE:
       'Your account has been deactivated. Please contact support.',
     ACCOUNT_BANNED: 'Your account has been banned. Please contact support.',
+    EMAIL_NOT_VERIFIED: 'Please verify your email before logging in.',
     GOOGLE_ONLY_ACCOUNT:
       'This account uses Google login. Please sign in with Google.',
     INVALID_TOKEN: 'Token is invalid or expired',

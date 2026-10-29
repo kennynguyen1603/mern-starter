@@ -17,6 +17,7 @@ const schema = z
       .enum(['development', 'production', 'test'])
       .default('development'),
     FRONTEND_URL: z.url(),
+    ADMIN_URL: z.url().optional(),
     TRUST_PROXY: z.coerce.number().int().min(0).default(0),
     MONGODB_URI: z.string().min(1),
     DB_NAME: z.string().min(1),
@@ -60,6 +61,7 @@ export const env = Object.freeze({
   port: envRaw.PORT,
   nodeEnv: envRaw.NODE_ENV,
   frontendUrl: envRaw.FRONTEND_URL,
+  adminUrl: envRaw.ADMIN_URL,
   trustProxy: envRaw.TRUST_PROXY,
   encryptionKey: envRaw.ENCRYPTION_KEY,
   sessionSecret: envRaw.SESSION_SECRET,

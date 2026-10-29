@@ -13,8 +13,9 @@ export interface TestUser {
   password: string;
 }
 
+// Verified by default: unverified accounts cannot log in.
 export const createUser = async (
-  overrides: Partial<Omit<TestUser, 'id'>> = {},
+  overrides: Partial<Omit<TestUser, 'id'>> & { verified?: boolean } = {},
 ): Promise<TestUser> => {
   counter += 1;
   const data = {
@@ -23,11 +24,15 @@ export const createUser = async (
     password: overrides.password ?? DEFAULT_PASSWORD,
   };
   const created = await userService.createLocalUser(data);
-  return { ...data, email: created.email, id: created._id.toString() };
+  const id = created._id.toString();
+  if (overrides.verified !== false) {
+    await userRepository.updateById(id, { isEmailVerified: true });
+  }
+  return { ...data, email: created.email, id };
 };
 
 export const createAdmin = async (
-  overrides: Partial<Omit<TestUser, 'id'>> = {},
+  overrides: Parameters<typeof createUser>[0] = {},
 ): Promise<TestUser> => {
   const user = await createUser(overrides);
   await userRepository.updateById(user.id, { role: UserRole.ADMIN });

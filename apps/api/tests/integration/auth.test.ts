@@ -3,6 +3,7 @@ import { UserStatus } from '@mern/shared';
 import app from '@/app.js';
 import { redis } from '@/config/redis/redis.js';
 import { userRepository } from '@/repositories/user.repository.js';
+import { emailService } from '@/services/email.service.js';
 import { clearDb, closeTestDb, connectTestDb } from '../helpers/db.js';
 import { createUser, DEFAULT_PASSWORD } from '../helpers/factories.js';
 import { cookieValue, getCookies, loginAs } from '../helpers/auth.js';
@@ -105,6 +106,90 @@ describe('POST /api/v1/auth/login', () => {
 
     expect(res.body.error.message).toBe('Invalid email or password');
   });
+
+  it('refuses an unverified account with 403 and sets no cookies', async () => {
+    const { email } = await createUser({ verified: false });
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email, password: DEFAULT_PASSWORD })
+      .expect(403);
+
+    expect(res.body.error.message).toBe(
+      'Please verify your email before logging in.',
+    );
+    expect(getCookies(res)).toHaveLength(0);
+  });
+
+  it('does not reveal verification status to a wrong password', async () => {
+    const { email } = await createUser({ verified: false });
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'Wrong12345' })
+      .expect(401);
+  });
+});
+
+describe('POST /api/v1/auth/resend-verification', () => {
+  const sendVerificationEmail = jest.mocked(emailService.sendVerificationEmail);
+  const resend = (email: string) =>
+    request(app).post('/api/v1/auth/resend-verification').send({ email });
+  const lastToken = () => sendVerificationEmail.mock.calls.at(-1)![1];
+
+  beforeEach(() => sendVerificationEmail.mockClear());
+
+  it('sends a fresh link that verifies the account and invalidates the old one', async () => {
+    const { email } = await createUser({ verified: false });
+
+    await resend(email).expect(200);
+    const oldToken = lastToken();
+    const res = await resend(email).expect(200);
+    expect(res.body.message).toBe('Verification email sent');
+    expect(sendVerificationEmail).toHaveBeenCalledTimes(2);
+    expect(sendVerificationEmail).toHaveBeenLastCalledWith(
+      email,
+      expect.any(String),
+      expect.any(String),
+    );
+
+    await request(app)
+      .get('/api/v1/auth/verify-email')
+      .query({ token: oldToken })
+      .expect(400);
+    const verified = await request(app)
+      .get('/api/v1/auth/verify-email')
+      .query({ token: lastToken() })
+      .expect(302);
+    expect(verified.headers.location).toBe(`${FRONTEND}/login?verified=true`);
+
+    await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email, password: DEFAULT_PASSWORD })
+      .expect(200);
+  });
+
+  it('answers an unknown email like a known one and sends nothing', async () => {
+    const res = await resend('nobody@example.com').expect(200);
+    expect(res.body.message).toBe('Verification email sent');
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('refuses an already verified email with 400', async () => {
+    const { email } = await createUser();
+    const res = await resend(email).expect(400);
+    expect(res.body.error.message).toBe('Email is already verified');
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid email with 422', async () => {
+    await resend('not-an-email').expect(422);
+  });
+
+  it('rate limits after 3 requests', async () => {
+    const { email } = await createUser({ verified: false });
+    for (let i = 0; i < 3; i += 1) await resend(email).expect(200);
+    await resend(email).expect(429);
+    expect(sendVerificationEmail).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe('POST /api/v1/auth/refresh', () => {
@@ -118,7 +203,10 @@ describe('POST /api/v1/auth/refresh', () => {
       .expect(200);
 
     expect(res.body.message).toBe('Token refreshed successfully');
-    expect(res.body.data.accessToken).toEqual(expect.any(String));
+    // Tokens travel only in HttpOnly cookies, never in a JS-readable body.
+    expect(res.body.data).toBeNull();
+    expect(res.text).not.toContain('eyJ');
+    expect(cookieValue(getCookies(res), 'accessToken')).toBeTruthy();
     expect(cookieValue(getCookies(res), 'refreshToken')).not.toBe(
       cookieValue(cookies, 'refreshToken'),
     );
@@ -309,5 +397,28 @@ describe('Google OAuth', () => {
       .post('/api/v1/auth/google/link')
       .send({ pendingToken, password: DEFAULT_PASSWORD })
       .expect(409);
+  });
+});
+
+describe('CORS', () => {
+  it.each([FRONTEND, 'http://localhost:5174'])(
+    'allows credentialed requests from %s',
+    async (origin) => {
+      const res = await request(app)
+        .options('/api/v1/auth/login')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'POST')
+        .expect(204);
+      expect(res.headers['access-control-allow-origin']).toBe(origin);
+      expect(res.headers['access-control-allow-credentials']).toBe('true');
+    },
+  );
+
+  it('does not allow an unknown origin', async () => {
+    const res = await request(app)
+      .options('/api/v1/auth/login')
+      .set('Origin', 'https://evil.example')
+      .set('Access-Control-Request-Method', 'POST');
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
 });
