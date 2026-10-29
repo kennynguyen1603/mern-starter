@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
+import AuthShell from '@/layouts/AuthShell';
 import MainLayout from '@/layouts/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LoginPage from '@/pages/LoginPage';
@@ -21,16 +22,12 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/forgot-password',
-    element: <ForgotPasswordPage />,
-  },
-  {
-    path: '/reset-password',
-    element: <ResetPasswordPage />,
-  },
-  {
-    path: '/auth/link-account',
-    element: <LinkAccountPage />,
+    element: <AuthShell />,
+    children: [
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '/auth/link-account', element: <LinkAccountPage /> },
+    ],
   },
   {
     element: <ProtectedRoute />,

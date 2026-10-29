@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Field, Input, Text, buttonVariants } from '@mern/ui';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth.schema';
-import { useLogin } from '@/hooks/useAuthQueries';
+import { useLogin, useResendVerification } from '@/hooks/useAuthQueries';
+import AuthHeading from '@/components/AuthHeading';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -12,6 +15,11 @@ export default function LoginPage() {
   const authSuccess = searchParams.get('auth') === 'success';
 
   const login = useLogin();
+  const unverified =
+    isAxiosError(login.error) && login.error.response?.status === 403;
+  const resend = useResendVerification();
+  const resendLimited =
+    isAxiosError(resend.error) && resend.error.response?.status === 429;
 
   const {
     register,
@@ -26,59 +34,104 @@ export default function LoginPage() {
   }, [authSuccess, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
+    resend.reset();
     await login.mutateAsync(data);
     navigate('/');
   };
 
   return (
-    <div>
-      <h1>Đăng nhập</h1>
+    <div className="grid gap-4">
+      <AuthHeading title="Đăng nhập" />
 
       {verified && (
-        <p style={{ color: 'green' }}>
+        <Alert variant="success">
           Email đã được xác minh. Bạn có thể đăng nhập.
-        </p>
+        </Alert>
       )}
       {login.isError && (
-        <p style={{ color: 'red' }}>
-          Đăng nhập thất bại. Vui lòng kiểm tra lại.
-        </p>
+        <Alert variant="danger">
+          {unverified
+            ? 'Email chưa được xác minh. Vui lòng kiểm tra hộp thư để xác minh trước khi đăng nhập.'
+            : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.'}
+        </Alert>
+      )}
+      {unverified && (
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={resend.isPending}
+          // Resend to the address that was refused, not whatever is typed now.
+          onClick={() => resend.mutate(login.variables!.email)}
+        >
+          {resend.isPending ? 'Đang gửi...' : 'Gửi lại email xác minh'}
+        </Button>
+      )}
+      {resend.isSuccess && (
+        <Alert variant="success">
+          Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.
+        </Alert>
+      )}
+      {resend.isError && (
+        <Alert variant="danger">
+          {resendLimited
+            ? 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.'
+            : 'Không thể gửi lại email xác minh. Vui lòng thử lại.'}
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Email</label>
-          <input type="email" {...register('email')} />
-          {errors.email && (
-            <p style={{ color: 'red' }}>{errors.email.message}</p>
-          )}
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <Field label="Email" error={errors.email?.message}>
+          <Input
+            type="email"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+        </Field>
+
+        <Field label="Mật khẩu" error={errors.password?.message}>
+          <Input
+            type="password"
+            aria-invalid={!!errors.password}
+            {...register('password')}
+          />
+        </Field>
+
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Quên mật khẩu?
+          </Link>
         </div>
 
-        <div>
-          <label>Mật khẩu</label>
-          <input type="password" {...register('password')} />
-          {errors.password && (
-            <p style={{ color: 'red' }}>{errors.password.message}</p>
-          )}
-        </div>
-
-        <button type="submit" disabled={isSubmitting || login.isPending}>
+        <Button type="submit" disabled={isSubmitting || login.isPending}>
           Đăng nhập
-        </button>
+        </Button>
       </form>
 
-      <hr />
+      <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase">
+        <span className="h-px flex-1 bg-border" />
+        hoặc
+        <span className="h-px flex-1 bg-border" />
+      </div>
 
-      <a href="/api/v1/auth/google">
-        <button type="button">Đăng nhập với Google</button>
+      <a
+        href="/api/v1/auth/google"
+        className={buttonVariants({ variant: 'secondary' })}
+      >
+        Đăng nhập với Google
       </a>
 
-      <p>
-        Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
-      </p>
-      <p>
-        <Link to="/forgot-password">Quên mật khẩu?</Link>
-      </p>
+      <Text variant="description" className="text-center">
+        Chưa có tài khoản?{' '}
+        <Link
+          to="/register"
+          className="font-medium text-accent hover:underline"
+        >
+          Đăng ký
+        </Link>
+      </Text>
     </div>
   );
 }

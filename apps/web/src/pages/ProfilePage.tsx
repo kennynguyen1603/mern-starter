@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Card, Field, Heading, Input, Text } from '@mern/ui';
 import {
   updateProfileSchema,
   type UpdateProfileFormValues,
@@ -43,109 +44,121 @@ export default function ProfilePage() {
     passwordForm.reset();
   };
 
-  if (isLoading) return <p>Đang tải...</p>;
-  if (!profile) return <p>Không tìm thấy người dùng.</p>;
+  if (isLoading) return <Text variant="description">Đang tải...</Text>;
+  if (!profile)
+    return <Text variant="description">Không tìm thấy người dùng.</Text>;
+
+  const profileErrors = profileForm.formState.errors;
+  const passwordErrors = passwordForm.formState.errors;
 
   return (
-    <div>
-      <h1>Profile</h1>
+    <div className="grid max-w-2xl gap-8">
+      <Heading as="h1" variant="title">
+        Profile
+      </Heading>
 
-      <section>
-        <h2>Thông tin cá nhân</h2>
-        <p>Email: {profile.email}</p>
+      <Card className="grid gap-6">
+        <div className="space-y-1">
+          <Heading>Thông tin cá nhân</Heading>
+          <Text variant="description">Email: {profile.email}</Text>
+        </div>
 
         {isOwnProfile && (
-          <form onSubmit={profileForm.handleSubmit(onUpdateProfile)}>
-            <div>
-              <label>Tên</label>
-              <input type="text" {...profileForm.register('name')} />
-              {profileForm.formState.errors.name && (
-                <p style={{ color: 'red' }}>
-                  {profileForm.formState.errors.name.message}
-                </p>
-              )}
-            </div>
+          <form
+            onSubmit={profileForm.handleSubmit(onUpdateProfile)}
+            className="grid gap-4"
+          >
+            <Field label="Tên" error={profileErrors.name?.message}>
+              <Input
+                type="text"
+                aria-invalid={!!profileErrors.name}
+                {...profileForm.register('name')}
+              />
+            </Field>
 
-            <div>
-              <label>Avatar URL</label>
-              <input type="text" {...profileForm.register('avatar')} />
-              {profileForm.formState.errors.avatar && (
-                <p style={{ color: 'red' }}>
-                  {profileForm.formState.errors.avatar.message}
-                </p>
-              )}
-            </div>
+            <Field label="Avatar URL" error={profileErrors.avatar?.message}>
+              <Input
+                type="text"
+                aria-invalid={!!profileErrors.avatar}
+                {...profileForm.register('avatar')}
+              />
+            </Field>
 
             {updateProfile.isSuccess && (
-              <p style={{ color: 'green' }}>Đã cập nhật.</p>
+              <Alert variant="success">Đã cập nhật.</Alert>
             )}
             {updateProfile.isError && (
-              <p style={{ color: 'red' }}>Cập nhật thất bại.</p>
+              <Alert variant="danger">Cập nhật thất bại.</Alert>
             )}
 
-            <button type="submit" disabled={updateProfile.isPending}>
+            <Button
+              type="submit"
+              disabled={updateProfile.isPending}
+              className="justify-self-start"
+            >
               Lưu thay đổi
-            </button>
+            </Button>
           </form>
         )}
-      </section>
+      </Card>
 
       {isOwnProfile && profile.authProvider === 'local' && (
-        <section style={{ marginTop: '2rem' }}>
-          <h2>Đổi mật khẩu</h2>
+        <Card className="grid gap-6">
+          <Heading>Đổi mật khẩu</Heading>
 
-          <form onSubmit={passwordForm.handleSubmit(onChangePassword)}>
-            <div>
-              <label>Mật khẩu hiện tại</label>
-              <input
+          <form
+            onSubmit={passwordForm.handleSubmit(onChangePassword)}
+            className="grid gap-4"
+          >
+            <Field
+              label="Mật khẩu hiện tại"
+              error={passwordErrors.currentPassword?.message}
+            >
+              <Input
                 type="password"
+                aria-invalid={!!passwordErrors.currentPassword}
                 {...passwordForm.register('currentPassword')}
               />
-              {passwordForm.formState.errors.currentPassword && (
-                <p style={{ color: 'red' }}>
-                  {passwordForm.formState.errors.currentPassword.message}
-                </p>
-              )}
-            </div>
+            </Field>
 
-            <div>
-              <label>Mật khẩu mới</label>
-              <input
+            <Field
+              label="Mật khẩu mới"
+              error={passwordErrors.newPassword?.message}
+            >
+              <Input
                 type="password"
+                aria-invalid={!!passwordErrors.newPassword}
                 {...passwordForm.register('newPassword')}
               />
-              {passwordForm.formState.errors.newPassword && (
-                <p style={{ color: 'red' }}>
-                  {passwordForm.formState.errors.newPassword.message}
-                </p>
-              )}
-            </div>
+            </Field>
 
-            <div>
-              <label>Xác nhận mật khẩu mới</label>
-              <input
+            <Field
+              label="Xác nhận mật khẩu mới"
+              error={passwordErrors.confirmNewPassword?.message}
+            >
+              <Input
                 type="password"
+                aria-invalid={!!passwordErrors.confirmNewPassword}
                 {...passwordForm.register('confirmNewPassword')}
               />
-              {passwordForm.formState.errors.confirmNewPassword && (
-                <p style={{ color: 'red' }}>
-                  {passwordForm.formState.errors.confirmNewPassword.message}
-                </p>
-              )}
-            </div>
+            </Field>
 
             {changePassword.isSuccess && (
-              <p style={{ color: 'green' }}>Đã đổi mật khẩu.</p>
+              <Alert variant="success">Đã đổi mật khẩu.</Alert>
             )}
             {changePassword.isError && (
-              <p style={{ color: 'red' }}>Đổi mật khẩu thất bại.</p>
+              <Alert variant="danger">Đổi mật khẩu thất bại.</Alert>
             )}
 
-            <button type="submit" disabled={changePassword.isPending}>
+            <Button
+              type="submit"
+              disabled={changePassword.isPending}
+              className="justify-self-start"
+            >
               Đổi mật khẩu
-            </button>
+            </Button>
           </form>
-        </section>
+        </Card>
       )}
     </div>
   );

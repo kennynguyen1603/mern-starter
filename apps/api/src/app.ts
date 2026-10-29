@@ -18,10 +18,13 @@ app.set('trust proxy', env.trustProxy);
 
 app.use(
   cors({
-    origin:
-      env.nodeEnv === 'development'
-        ? [env.frontendUrl, 'http://localhost:5173']
-        : [env.frontendUrl],
+    origin: [
+      env.frontendUrl,
+      ...(env.adminUrl ? [env.adminUrl] : []),
+      ...(env.nodeEnv === 'development'
+        ? ['http://localhost:5173', 'http://localhost:5174']
+        : []),
+    ],
     credentials: true,
   }),
 );

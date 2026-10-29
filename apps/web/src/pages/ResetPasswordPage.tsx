@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Field, Input, buttonVariants } from '@mern/ui';
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from '@/schemas/auth.schema';
 import { useResetPassword } from '@/hooks/useAuthQueries';
+import AuthHeading from '@/components/AuthHeading';
 
 export default function ResetPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -27,59 +29,71 @@ export default function ResetPasswordPage() {
 
   if (submitted) {
     return (
-      <div>
-        <h1>Đặt lại mật khẩu thành công</h1>
-        <p>Mật khẩu của bạn đã được cập nhật.</p>
-        <Link to="/login">Đăng nhập</Link>
+      <div className="grid gap-4">
+        <AuthHeading
+          title="Đặt lại mật khẩu thành công"
+          description="Mật khẩu của bạn đã được cập nhật."
+        />
+        <Link to="/login" className={buttonVariants()}>
+          Đăng nhập
+        </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Đặt lại mật khẩu</h1>
+    <div className="grid gap-4">
+      <AuthHeading title="Đặt lại mật khẩu" />
 
       {resetPassword.isError && (
-        <p style={{ color: 'red' }}>Mã OTP không hợp lệ hoặc đã hết hạn.</p>
+        <Alert variant="danger">Mã OTP không hợp lệ hoặc đã hết hạn.</Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Email</label>
-          <input type="email" {...register('email')} />
-          {errors.email && (
-            <p style={{ color: 'red' }}>{errors.email.message}</p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <Field label="Email" error={errors.email?.message}>
+          <Input
+            type="email"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+        </Field>
 
-        <div>
-          <label>Mã OTP</label>
-          <input type="text" {...register('otp')} />
-          {errors.otp && <p style={{ color: 'red' }}>{errors.otp.message}</p>}
-        </div>
+        <Field label="Mã OTP" error={errors.otp?.message}>
+          <Input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            className="font-mono tracking-widest"
+            aria-invalid={!!errors.otp}
+            {...register('otp')}
+          />
+        </Field>
 
-        <div>
-          <label>Mật khẩu mới</label>
-          <input type="password" {...register('newPassword')} />
-          {errors.newPassword && (
-            <p style={{ color: 'red' }}>{errors.newPassword.message}</p>
-          )}
-        </div>
+        <Field label="Mật khẩu mới" error={errors.newPassword?.message}>
+          <Input
+            type="password"
+            aria-invalid={!!errors.newPassword}
+            {...register('newPassword')}
+          />
+        </Field>
 
-        <div>
-          <label>Xác nhận mật khẩu mới</label>
-          <input type="password" {...register('confirmNewPassword')} />
-          {errors.confirmNewPassword && (
-            <p style={{ color: 'red' }}>{errors.confirmNewPassword.message}</p>
-          )}
-        </div>
+        <Field
+          label="Xác nhận mật khẩu mới"
+          error={errors.confirmNewPassword?.message}
+        >
+          <Input
+            type="password"
+            aria-invalid={!!errors.confirmNewPassword}
+            {...register('confirmNewPassword')}
+          />
+        </Field>
 
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting || resetPassword.isPending}
         >
           Đặt lại mật khẩu
-        </button>
+        </Button>
       </form>
     </div>
   );

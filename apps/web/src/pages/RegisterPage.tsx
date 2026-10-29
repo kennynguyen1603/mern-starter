@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Field, Input, Text, buttonVariants } from '@mern/ui';
 import { registerSchema, type RegisterFormValues } from '@/schemas/auth.schema';
 import { useRegister } from '@/hooks/useAuthQueries';
+import AuthHeading from '@/components/AuthHeading';
 
 export default function RegisterPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -22,64 +24,73 @@ export default function RegisterPage() {
 
   if (submitted) {
     return (
-      <div>
-        <h1>Kiểm tra email của bạn</h1>
-        <p>
-          Chúng tôi đã gửi email xác minh. Vui lòng kiểm tra hộp thư và nhấn vào
-          liên kết để kích hoạt tài khoản.
-        </p>
-        <Link to="/login">Quay lại đăng nhập</Link>
+      <div className="grid gap-4">
+        <AuthHeading
+          title="Kiểm tra email của bạn"
+          description="Chúng tôi đã gửi email xác minh. Vui lòng kiểm tra hộp thư và nhấn vào liên kết để kích hoạt tài khoản."
+        />
+        <Link to="/login" className={buttonVariants({ variant: 'secondary' })}>
+          Quay lại đăng nhập
+        </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Đăng ký</h1>
+    <div className="grid gap-4">
+      <AuthHeading title="Đăng ký" />
 
       {register_.isError && (
-        <p style={{ color: 'red' }}>Đăng ký thất bại. Vui lòng thử lại.</p>
+        <Alert variant="danger">Đăng ký thất bại. Vui lòng thử lại.</Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Tên</label>
-          <input type="text" {...register('name')} />
-          {errors.name && <p style={{ color: 'red' }}>{errors.name.message}</p>}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <Field label="Tên" error={errors.name?.message}>
+          <Input
+            type="text"
+            aria-invalid={!!errors.name}
+            {...register('name')}
+          />
+        </Field>
 
-        <div>
-          <label>Email</label>
-          <input type="email" {...register('email')} />
-          {errors.email && (
-            <p style={{ color: 'red' }}>{errors.email.message}</p>
-          )}
-        </div>
+        <Field label="Email" error={errors.email?.message}>
+          <Input
+            type="email"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+        </Field>
 
-        <div>
-          <label>Mật khẩu</label>
-          <input type="password" {...register('password')} />
-          {errors.password && (
-            <p style={{ color: 'red' }}>{errors.password.message}</p>
-          )}
-        </div>
+        <Field label="Mật khẩu" error={errors.password?.message}>
+          <Input
+            type="password"
+            aria-invalid={!!errors.password}
+            {...register('password')}
+          />
+        </Field>
 
-        <div>
-          <label>Xác nhận mật khẩu</label>
-          <input type="password" {...register('confirmPassword')} />
-          {errors.confirmPassword && (
-            <p style={{ color: 'red' }}>{errors.confirmPassword.message}</p>
-          )}
-        </div>
+        <Field
+          label="Xác nhận mật khẩu"
+          error={errors.confirmPassword?.message}
+        >
+          <Input
+            type="password"
+            aria-invalid={!!errors.confirmPassword}
+            {...register('confirmPassword')}
+          />
+        </Field>
 
-        <button type="submit" disabled={isSubmitting || register_.isPending}>
+        <Button type="submit" disabled={isSubmitting || register_.isPending}>
           Đăng ký
-        </button>
+        </Button>
       </form>
 
-      <p>
-        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
-      </p>
+      <Text variant="description" className="text-center">
+        Đã có tài khoản?{' '}
+        <Link to="/login" className="font-medium text-accent hover:underline">
+          Đăng nhập
+        </Link>
+      </Text>
     </div>
   );
 }

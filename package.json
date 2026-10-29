@@ -4,11 +4,13 @@
   "description": "MERN Stack Monorepo — MongoDB, Express, React, Node.js",
   "private": true,
   "scripts": {
-    "dev": "concurrently --names api,web --prefix-colors blue,green \"pnpm --filter @mern/api dev\" \"pnpm --filter @mern/web dev\"",
+    "dev": "concurrently --names api,web,admin --prefix-colors blue,green,magenta \"pnpm --filter @mern/api dev\" \"pnpm --filter @mern/web dev\" \"pnpm --filter @mern/admin dev\"",
     "dev:api": "pnpm --filter @mern/api dev",
     "dev:web": "pnpm --filter @mern/web dev",
+    "dev:admin": "pnpm --filter @mern/admin dev",
     "build": "pnpm -r build",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx",
+    "test:e2e": "pnpm --filter @mern/e2e test",
     "format": "prettier --write .",
     "prepare": "husky install"
   },

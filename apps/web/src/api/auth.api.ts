@@ -18,6 +18,9 @@ export const logoutApi = () => api.post<IApiSuccess<null>>('/auth/logout');
 export const forgotPasswordApi = (email: string) =>
   api.post<IApiSuccess<null>>('/auth/forgot-password', { email });
 
+export const resendVerificationApi = (email: string) =>
+  api.post<IApiSuccess<null>>('/auth/resend-verification', { email });
+
 export const resetPasswordApi = (data: {
   email: string;
   otp: string;

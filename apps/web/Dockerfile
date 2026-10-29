@@ -11,6 +11,7 @@ WORKDIR /repo
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/shared/package.json packages/shared/
+COPY packages/ui/package.json packages/ui/
 COPY apps/web/package.json apps/web/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter @mern/web... --ignore-scripts
@@ -21,6 +22,7 @@ FROM deps AS builder
 ARG VITE_ACCESS_TOKEN_EXP_MS=900000
 ENV VITE_ACCESS_TOKEN_EXP_MS=$VITE_ACCESS_TOKEN_EXP_MS
 COPY packages/shared packages/shared
+COPY packages/ui packages/ui
 COPY apps/web apps/web
 RUN pnpm --filter @mern/web build
 

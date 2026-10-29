@@ -2,6 +2,7 @@ import request from 'supertest';
 import { ObjectId } from 'mongodb';
 import app from '@/app.js';
 import { redis } from '@/config/redis/redis.js';
+import { UserRole, UserStatus } from '@mern/shared';
 import { userRepository } from '@/repositories/user.repository.js';
 import { clearDb, closeTestDb, connectTestDb } from '../helpers/db.js';
 import {
@@ -113,24 +114,65 @@ describe('GET /api/v1/user', () => {
 });
 
 describe('POST /api/v1/user', () => {
-  it('creates a user like /auth/register', async () => {
-    const res = await request(app)
+  it('no longer exists — registration goes through /auth/register only', async () => {
+    await request(app)
       .post('/api/v1/user')
       .send({
         name: 'Bob',
         email: 'bob@example.com',
         password: DEFAULT_PASSWORD,
       })
-      .expect(201);
+      .expect(404);
 
-    expect(res.body.data.user).toMatchObject({ email: 'bob@example.com' });
+    expect(await userRepository.findByEmail('bob@example.com')).toBeNull();
+  });
+});
+
+describe('authorization uses the current DB state, not the token', () => {
+  it('a demoted admin loses admin access immediately', async () => {
+    const { admin, cookies } = await loginAdmin();
+    await request(app).get('/api/v1/user').set('Cookie', cookies).expect(200);
+
+    await userRepository.updateById(admin.id, { role: UserRole.USER });
+    await request(app).get('/api/v1/user').set('Cookie', cookies).expect(403);
   });
 
-  it('applies the register validation rules', async () => {
-    await request(app)
-      .post('/api/v1/user')
-      .send({ name: 'Bob', email: 'bob@example.com', password: 'nouppercase1' })
-      .expect(422);
+  it.each([
+    [UserStatus.BANNED, 'Your account has been banned. Please contact support.'],
+    [
+      UserStatus.INACTIVE,
+      'Your account has been deactivated. Please contact support.',
+    ],
+  ])('a %s user is locked out of an existing session', async (status, msg) => {
+    const { user, cookies } = await loginUser();
+    await userRepository.updateById(user.id, { status });
+
+    const res = await request(app)
+      .get('/api/v1/user/me')
+      .set('Cookie', cookies)
+      .expect(401);
+    expect(res.body.error.message).toBe(msg);
+  });
+});
+
+describe('rate limiting on /api/v1/user', () => {
+  it('is counted per user, not per IP', async () => {
+    const a = await loginUser();
+    const b = await loginUser();
+    const me = (cookies: string[]) =>
+      request(app).get('/api/v1/user/me').set('Cookie', cookies);
+
+    for (let i = 0; i < 10; i++) await me(a.cookies).expect(200);
+    await me(a.cookies).expect(429);
+
+    // Same IP, different user → own budget.
+    await me(b.cookies).expect(200);
+  });
+
+  it('rejects anonymous requests before they reach the limiter', async () => {
+    for (let i = 0; i < 12; i++) {
+      await request(app).get('/api/v1/user/me').expect(401);
+    }
   });
 });
 

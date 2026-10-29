@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Field, Input, buttonVariants } from '@mern/ui';
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from '@/schemas/auth.schema';
 import { useForgotPassword } from '@/hooks/useAuthQueries';
+import AuthHeading from '@/components/AuthHeading';
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -27,42 +29,49 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div>
-        <h1>Kiểm tra email của bạn</h1>
-        <p>Chúng tôi đã gửi mã OTP đặt lại mật khẩu đến email của bạn.</p>
-        <Link to="/reset-password">Nhập mã OTP</Link>
+      <div className="grid gap-4">
+        <AuthHeading
+          title="Kiểm tra email của bạn"
+          description="Chúng tôi đã gửi mã OTP đặt lại mật khẩu đến email của bạn."
+        />
+        <Link to="/reset-password" className={buttonVariants()}>
+          Nhập mã OTP
+        </Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Quên mật khẩu</h1>
+    <div className="grid gap-4">
+      <AuthHeading title="Quên mật khẩu" />
 
       {forgotPassword.isError && (
-        <p style={{ color: 'red' }}>Có lỗi xảy ra. Vui lòng thử lại.</p>
+        <Alert variant="danger">Có lỗi xảy ra. Vui lòng thử lại.</Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Email</label>
-          <input type="email" {...register('email')} />
-          {errors.email && (
-            <p style={{ color: 'red' }}>{errors.email.message}</p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <Field label="Email" error={errors.email?.message}>
+          <Input
+            type="email"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+        </Field>
 
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting || forgotPassword.isPending}
         >
           Gửi mã OTP
-        </button>
+        </Button>
       </form>
 
-      <p>
-        <Link to="/login">Quay lại đăng nhập</Link>
-      </p>
+      <Link
+        to="/login"
+        className="text-center text-sm text-muted-foreground hover:text-foreground"
+      >
+        Quay lại đăng nhập
+      </Link>
     </div>
   );
 }

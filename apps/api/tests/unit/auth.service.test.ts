@@ -115,6 +115,21 @@ describe('authService.login', () => {
     );
   });
 
+  it('rejects an unverified email with 403 only after the password matches', async () => {
+    const { email } = await createUser({ verified: false });
+    await expectRejection(
+      authService.login({ email, password: DEFAULT_PASSWORD }),
+      403,
+      'Please verify your email before logging in.',
+    );
+    // A wrong password must not reveal the verification state
+    await expectRejection(
+      authService.login({ email, password: 'Wrong12345' }),
+      401,
+      'Invalid email or password',
+    );
+  });
+
   it('keeps "+" in the address and matches case-insensitively', async () => {
     const { id, email } = await createUser({ email: 'Bob+Tag@Example.com' });
     expect(email).toBe('bob+tag@example.com');
@@ -405,6 +420,27 @@ describe('authService password reset', () => {
       400,
       INVALID_OTP,
     );
+  });
+
+  it('answers an unknown email exactly like a wrong OTP', async () => {
+    await expectRejection(
+      authService.resetPassword('nobody@example.com', '123456', 'NewPassword123'),
+      400,
+      INVALID_OTP,
+    );
+  });
+
+  it('counts attempts against an unknown email too', async () => {
+    const email = 'nobody@example.com';
+    for (let i = 0; i < 6; i++) {
+      await expectRejection(
+        authService.resetPassword(email, '123456', 'NewPassword123'),
+        400,
+        INVALID_OTP,
+      );
+    }
+    // The mock counter returns the next value: 6 failures were recorded
+    expect(await redis.incrWithExpiry(`otp_attempts:${email}`, 600)).toBe(7);
   });
 
   it("rejects another user's OTP", async () => {

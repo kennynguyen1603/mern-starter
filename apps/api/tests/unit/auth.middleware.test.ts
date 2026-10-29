@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserRole } from '@mern/shared';
+import { UserRole, UserStatus } from '@mern/shared';
 import {
   requireAdmin,
   requireAuth,
@@ -8,6 +8,7 @@ import {
 } from '@/middlewares/auth.middleware.js';
 import { jwtService } from '@/services/jwt.service.js';
 import { tokenRepository } from '@/repositories/token.repository.js';
+import { userRepository } from '@/repositories/user.repository.js';
 import { ErrorResponse } from '@/core/error.response.js';
 
 const res = {} as Response;
@@ -32,11 +33,18 @@ const expectError = (fn: () => unknown, status: number, message: string) => {
 
 describe('requireAuth', () => {
   let blacklisted: jest.SpyInstance;
+  let findUser: jest.SpyInstance;
+
+  const storedUser = (overrides: object = {}) =>
+    ({ role: UserRole.USER, status: UserStatus.ACTIVE, ...overrides }) as never;
 
   beforeEach(() => {
     blacklisted = jest
       .spyOn(tokenRepository, 'isSessionBlacklisted')
       .mockResolvedValue(false);
+    findUser = jest
+      .spyOn(userRepository, 'findById')
+      .mockResolvedValue(storedUser());
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -114,12 +122,49 @@ describe('requireAuth', () => {
   });
 
   it('accepts a Bearer token from the Authorization header', async () => {
+    findUser.mockResolvedValue(storedUser({ role: UserRole.ADMIN }));
     const req = makeReq({
       headers: { authorization: `Bearer ${accessToken(UserRole.ADMIN)}` },
     });
     const next = await run(req);
     expect(next).toHaveBeenCalledWith();
     expect(req.user?.role).toBe(UserRole.ADMIN);
+  });
+
+  it('takes the role from the DB, not from the token', async () => {
+    // Admin demoted after the token was issued
+    const req = makeReq({ cookies: { accessToken: accessToken(UserRole.ADMIN) } });
+    await run(req);
+    expect(findUser).toHaveBeenCalledWith('user-1');
+    expect(req.user?.role).toBe(UserRole.USER);
+  });
+
+  it('rejects a token whose user no longer exists', async () => {
+    findUser.mockResolvedValue(null);
+    await expect(
+      run(makeReq({ cookies: { accessToken: accessToken() } })),
+    ).rejects.toMatchObject({
+      status: 401,
+      message: 'Invalid access token. Please login again.',
+    });
+  });
+
+  it.each([
+    [UserStatus.BANNED, 'Your account has been banned. Please contact support.'],
+    [UserStatus.INACTIVE, expect.any(String)],
+  ])('rejects a %s account', async (status, message) => {
+    findUser.mockResolvedValue(storedUser({ status }));
+    const req = makeReq({ cookies: { accessToken: accessToken() } });
+    await expect(run(req)).rejects.toMatchObject({ status: 401, message });
+    expect(req.user).toBeUndefined();
+  });
+
+  it('does not hit the DB for a revoked session', async () => {
+    blacklisted.mockResolvedValue(true);
+    await expect(
+      run(makeReq({ cookies: { accessToken: accessToken() } })),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(findUser).not.toHaveBeenCalled();
   });
 });
 

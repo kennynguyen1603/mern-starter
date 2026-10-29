@@ -85,7 +85,7 @@ class EmailService {
     token: string,
     name?: string,
   ): Promise<void> {
-    const verifyUrl = `${env.frontendUrl}/verify-email?token=${token}`;
+    const verifyUrl = `${env.frontendUrl}/api/v1/auth/verify-email?token=${token}`;
 
     const html = this.templates.render('verify-email', {
       subject: 'Xác nhận địa chỉ email của bạn',

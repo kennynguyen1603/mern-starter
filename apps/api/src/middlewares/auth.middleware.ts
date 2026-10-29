@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError, ForbiddenError } from '@/core/error.response.js';
 import { jwtService } from '@/services/jwt.service.js';
 import { tokenRepository } from '@/repositories/token.repository.js';
+import { userRepository } from '@/repositories/user.repository.js';
 import { RESPONSE_MESSAGES } from '@/utils/constants.js';
-import { UserRole } from '@mern/shared';
+import { UserRole, UserStatus } from '@mern/shared';
 
 // Extract Access Token: priority HttpOnly cookie, fallback to Authorization header
 const extractAccessToken = (req: Request): string => {
@@ -49,9 +50,21 @@ export const requireAuth = async (
     throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.SESSION_REVOKED);
   }
 
+  // Role and status come from the DB so demotions and bans apply immediately
+  const user = await userRepository.findById(result.userId);
+  if (!user) {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.INVALID_ACCESS_TOKEN);
+  }
+  if (user.status === UserStatus.INACTIVE) {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.ACCOUNT_INACTIVE);
+  }
+  if (user.status === UserStatus.BANNED) {
+    throw new UnauthorizedError(RESPONSE_MESSAGES.AUTH.ACCOUNT_BANNED);
+  }
+
   req.user = {
     userId: result.userId,
-    role: result.role,
+    role: user.role,
     sessionId: result.sessionId,
   };
 

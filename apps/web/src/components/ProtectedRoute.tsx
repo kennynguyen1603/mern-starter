@@ -8,9 +8,7 @@ export default function ProtectedRoute() {
 
   if (isLoading) {
     return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
-      >
+      <div className="flex min-h-svh items-center justify-center text-sm text-muted-foreground">
         Đang tải...
       </div>
     );
