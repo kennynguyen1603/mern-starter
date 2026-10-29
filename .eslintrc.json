@@ -15,6 +15,10 @@
     {
       "files": ["apps/api/tests/**"],
       "env": { "jest": true }
+    },
+    {
+      "files": ["e2e/**"],
+      "rules": { "no-empty-pattern": "off" }
     }
   ],
   "env": {
@@ -22,5 +26,5 @@
     "node": true,
     "es2021": true
   },
-  "ignorePatterns": ["node_modules", "dist"]
+  "ignorePatterns": ["node_modules", "dist", "test-results", "playwright-report"]
 }
