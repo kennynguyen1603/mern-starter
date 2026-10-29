@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, Button, Field, Input } from '@mern/ui';
 import {
   linkAccountSchema,
   type LinkAccountFormValues,
 } from '@/schemas/auth.schema';
 import { useGoogleLink } from '@/hooks/useAuthQueries';
+import AuthHeading from '@/components/AuthHeading';
 
 export default function LinkAccountPage() {
   const navigate = useNavigate();
@@ -29,39 +31,34 @@ export default function LinkAccountPage() {
   };
 
   if (!pendingToken) {
-    return (
-      <div>
-        <p style={{ color: 'red' }}>Token không hợp lệ.</p>
-      </div>
-    );
+    return <Alert variant="danger">Token không hợp lệ.</Alert>;
   }
 
   return (
-    <div>
-      <h1>Liên kết tài khoản Google</h1>
-      <p>
-        Email Google của bạn đã được đăng ký trước đó. Nhập mật khẩu để liên kết
-        tài khoản.
-      </p>
+    <div className="grid gap-4">
+      <AuthHeading
+        title="Liên kết tài khoản Google"
+        description="Email Google của bạn đã được đăng ký trước đó. Nhập mật khẩu để liên kết tài khoản."
+      />
 
       {googleLink.isError && (
-        <p style={{ color: 'red' }}>
+        <Alert variant="danger">
           Mật khẩu không đúng hoặc token đã hết hạn.
-        </p>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Mật khẩu hiện tại</label>
-          <input type="password" {...register('password')} />
-          {errors.password && (
-            <p style={{ color: 'red' }}>{errors.password.message}</p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+        <Field label="Mật khẩu hiện tại" error={errors.password?.message}>
+          <Input
+            type="password"
+            aria-invalid={!!errors.password}
+            {...register('password')}
+          />
+        </Field>
 
-        <button type="submit" disabled={isSubmitting || googleLink.isPending}>
+        <Button type="submit" disabled={isSubmitting || googleLink.isPending}>
           Liên kết tài khoản
-        </button>
+        </Button>
       </form>
     </div>
   );

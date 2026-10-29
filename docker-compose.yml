@@ -25,6 +25,22 @@ services:
       api:
         condition: service_healthy
 
+  admin:
+    <<: *hardening
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        VITE_ACCESS_TOKEN_EXP_MS: ${VITE_ACCESS_TOKEN_EXP_MS:-900000}
+    image: mern-starter/admin
+    ports:
+      - '${ADMIN_PORT:-8081}:8080'
+    tmpfs:
+      - /tmp
+    depends_on:
+      api:
+        condition: service_healthy
+
   api:
     <<: *hardening
     build:

@@ -6,6 +6,7 @@ import {
   loginApi,
   logoutApi,
   registerApi,
+  resendVerificationApi,
   resetPasswordApi,
   setPasswordApi,
 } from '@/api/auth.api';
@@ -71,6 +72,10 @@ export function useLogout() {
 
 export function useForgotPassword() {
   return useMutation({ mutationFn: forgotPasswordApi });
+}
+
+export function useResendVerification() {
+  return useMutation({ mutationFn: resendVerificationApi });
 }
 
 export function useResetPassword() {
